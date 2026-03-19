@@ -5,8 +5,8 @@ const contentDiscoveryModule: GatewazeModule = {
   type: 'feature',
   visibility: 'hidden',
   name: 'Content Discovery',
-  description: 'Automated content discovery agent that monitors configured sources for new agentic AI content',
-  version: '1.0.0',
+  description: 'Automated content discovery powered by Helix.ml agents that monitor configured sources for new agentic AI content',
+  version: '2.0.0',
 
   dependencies: ['content-pipeline'],
 
@@ -15,78 +15,53 @@ const contentDiscoveryModule: GatewazeModule = {
     'content-discovery.run',
   ],
 
-  // Workers process discovery, triage, and content processing jobs
-  workers: [
-    {
-      name: 'content-discovery',
-      handler: './workers/discovery-worker.ts',
-      concurrency: 2,
-    },
-    {
-      name: 'content-triage',
-      handler: './workers/triage-worker.ts',
-      concurrency: 3,
-    },
-    {
-      name: 'content-processing',
-      handler: './workers/processing-worker.ts',
-      concurrency: 2,
-    },
-  ],
-
-  // Schedulers run discovery on configured intervals
-  schedulers: [
-    {
-      name: 'content-discovery-hourly',
-      cron: '0 * * * *', // Every hour
-      handler: './schedulers/discovery-scheduler.ts',
-    },
-    {
-      name: 'content-refresh-weekly',
-      cron: '0 3 * * 0', // Sunday at 3am
-      handler: './schedulers/refresh-scheduler.ts',
-    },
-  ],
+  // Workers and schedulers are handled by Helix agents (see helix/ directory).
+  // The discovery, triage, and processing agents connect directly to Supabase
+  // via the Supabase MCP server and are triggered by Helix cron schedules:
+  //   - Discovery Agent: hourly (0 * * * *)
+  //   - Triage Agent: every 5 minutes (*/5 * * * *)
+  //   - Processing Agent: every 5 minutes (*/5 * * * *)
 
   migrations: [],
 
   configSchema: {
-    youtubeApiKey: {
-      key: 'youtubeApiKey',
-      type: 'secret',
-      required: false,
-      description: 'YouTube Data API key for channel/search discovery',
-    },
-    googleSearchApiKey: {
-      key: 'googleSearchApiKey',
-      type: 'secret',
-      required: false,
-      description: 'Google Custom Search API key',
-    },
-    googleSearchCx: {
-      key: 'googleSearchCx',
+    helixApiUrl: {
+      key: 'helixApiUrl',
       type: 'string',
       required: false,
-      description: 'Google Custom Search engine ID',
+      default: 'https://app.tryhelix.ai',
+      description: 'Helix API base URL (cloud or self-hosted)',
     },
-    anthropicApiKey: {
-      key: 'anthropicApiKey',
+    helixDiscoveryAgentKey: {
+      key: 'helixDiscoveryAgentKey',
       type: 'secret',
       required: false,
-      description: 'Anthropic API key for content summarization and segmentation',
+      description: 'API key for the Helix Discovery Agent',
+    },
+    helixTriageAgentKey: {
+      key: 'helixTriageAgentKey',
+      type: 'secret',
+      required: false,
+      description: 'API key for the Helix Triage Agent',
+    },
+    helixProcessingAgentKey: {
+      key: 'helixProcessingAgentKey',
+      type: 'secret',
+      required: false,
+      description: 'API key for the Helix Processing Agent',
     },
   },
 
   onInstall: async () => {
-    console.log('[content-discovery] Module installed');
+    console.log('[content-discovery] Module installed — deploy Helix agents from helix/ directory');
   },
 
   onEnable: async () => {
-    console.log('[content-discovery] Module enabled — discovery schedulers will start');
+    console.log('[content-discovery] Module enabled — ensure Helix agents are deployed and running');
   },
 
   onDisable: async () => {
-    console.log('[content-discovery] Module disabled — discovery schedulers stopped');
+    console.log('[content-discovery] Module disabled — consider pausing Helix agent cron triggers');
   },
 };
 

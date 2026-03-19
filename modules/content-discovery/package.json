@@ -1,14 +1,12 @@
 {
   "name": "@lf-gatewaze-modules/content-discovery",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "license": "UNLICENSED",
   "main": "index.ts",
   "types": "index.ts",
-  "description": "Automated content discovery agent for the content pipeline",
+  "description": "Automated content discovery powered by Helix.ml agents — configuration module for the content pipeline",
   "exports": {
-    ".": "./index.ts",
-    "./workers/*": "./workers/*",
-    "./schedulers/*": "./schedulers/*"
+    ".": "./index.ts"
   },
   "scripts": {
     "build": "tsc",
