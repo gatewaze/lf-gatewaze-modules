@@ -5,13 +5,14 @@
  *   1. Classify the submitted URL (single item vs index/feed/playlist)
  *   2. Determine content_type and source_type
  *   3. Expand collections into individual items (e.g., playlist → videos)
- *   4. Deduplicate against existing content_items
+ *   4. Deduplicate against existing content_items (exact URL + cross-platform fuzzy)
  *   5. Create entries in content_queue
  *
  * This is "Agent 1" from the spec — focused on classification and fan-out.
  */
 
 import { supabase } from '@/lib/supabase';
+import { findDuplicates } from '../utils/dedup';
 
 interface TriageJobData {
   submissionId: string;
@@ -49,7 +50,9 @@ export default async function triageWorker(job: { data: TriageJobData }) {
     // Classify the URL
     const classification = classifyUrl(url);
 
-    // Check for duplicates
+    // ================================================================
+    // Exact URL dedup — check if this exact URL already exists
+    // ================================================================
     const { data: existingItem } = await supabase
       .from('content_items')
       .select('id')
@@ -78,6 +81,38 @@ export default async function triageWorker(job: { data: TriageJobData }) {
         .eq('id', submissionId);
       console.log(`[content-triage] Already in queue: ${url}`);
       return;
+    }
+
+    // ================================================================
+    // Cross-platform dedup for podcasts
+    // If this is a podcast URL, check if we already have a video version
+    // of the same content (videos are preferred over podcasts)
+    // ================================================================
+    if (classification.contentType === 'podcast' && submission.title) {
+      const crossPlatformMatches = await findDuplicates(
+        submission.title,
+        null, // author not known at triage time
+        null, // duration not known at triage time
+      );
+
+      // If we find a high-confidence match that's a video, skip this podcast
+      const videoMatch = crossPlatformMatches.find(
+        (m) => m.item_content_type === 'video' && m.title_similarity > 0.8
+      );
+
+      if (videoMatch) {
+        await supabase
+          .from('content_submissions')
+          .update({
+            status: 'duplicate',
+            notes: `Cross-platform duplicate of video: ${videoMatch.item_url}`,
+          })
+          .eq('id', submissionId);
+        console.log(
+          `[content-triage] Podcast skipped — video version exists: ${videoMatch.item_url} (similarity=${videoMatch.title_similarity})`
+        );
+        return;
+      }
     }
 
     // For collection URLs (playlists, blog indexes), expand into individual items
@@ -183,12 +218,26 @@ function classifyUrl(url: string): UrlClassification {
 
   // Podcast platforms
   if (hostname.includes('spotify.com') || hostname.includes('podcasts.apple.com') ||
-      hostname.includes('anchor.fm') || hostname.includes('podbean.com')) {
+      hostname.includes('anchor.fm') || hostname.includes('podbean.com') ||
+      hostname.includes('overcast.fm') || hostname.includes('pocketcasts.com') ||
+      hostname.includes('castbox.fm') || hostname.includes('castro.fm')) {
     return {
       contentType: 'podcast',
       sourceType: 'podcast',
       priority: 3,
       isCollection: false,
+    };
+  }
+
+  // RSS feed URLs (common patterns)
+  if (parsed.pathname.endsWith('/feed') || parsed.pathname.endsWith('/rss') ||
+      parsed.pathname.endsWith('.xml') || parsed.pathname.endsWith('/atom') ||
+      parsed.pathname.includes('/feed/')) {
+    return {
+      contentType: 'podcast',
+      sourceType: 'rss',
+      priority: 3,
+      isCollection: true,
     };
   }
 
