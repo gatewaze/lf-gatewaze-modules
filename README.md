@@ -70,14 +70,3 @@ Sources added via the admin UI are stored in the database and can be managed dyn
 
 In all cases, the modules are auto-discovered by the Gatewaze module loader.
 
-## Architecture
-
-The content pipeline processes content through three stages:
-
-1. **Discovery** — Automated agents scan configured sources for new agentic AI content
-2. **Triage** — Submissions are classified, deduplicated, and expanded (e.g., playlists into individual videos)
-3. **Processing** — Content is scraped, summarized, tagged with projects/topics, and deep-indexed with timestamped video segments
-
-## License
-
-Proprietary. See [LICENSE](./LICENSE) for details.
