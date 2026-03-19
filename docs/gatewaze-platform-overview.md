@@ -94,56 +94,56 @@ The Content Pipeline module adds a full admin section to Gatewaze with:
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        CONTENT SOURCES                              │
-│  YouTube  ·  RSS/Blogs  ·  GitHub  ·  Reddit  ·  Hacker News  ·   │
-│  Google Search  ·  Conference sites  ·  Podcasts  ·  Twitter/X     │
+│  YouTube  ·  RSS/Blogs  ·  GitHub  ·  Reddit  ·  Hacker News  ·     │
+│  Google Search  ·  Conference sites  ·  Podcasts  ·  Twitter/X      │
 └──────────────────────────────┬──────────────────────────────────────┘
                                │
                                ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│              AGENT PIPELINE (Helix.ml → Production Runtime)           │
+│              AGENT PIPELINE (Helix.ml → Production Runtime)          │
 │                                                                      │
 │  ┌──────────────────┐                                                │
-│  │  DISCOVERY AGENT  │  Hourly scheduled scans of configured sources │
-│  │  (Claude Sonnet)  │  Deduplicates against existing content        │
+│  │  DISCOVERY AGENT │  Hourly scheduled scans of configured sources  │
+│  │  (Claude Sonnet) │  Deduplicates against existing content         │
 │  └────────┬─────────┘                                                │
 │           │ new URLs                                                 │
 │           ▼                                                          │
 │  ┌──────────────────┐                                                │
-│  │   TRIAGE AGENT    │  Classifies content type & source             │
-│  │  (Claude Sonnet)  │  Expands collections into individual items    │
-│  │   Every 5 min     │  Deduplicates, assigns priority               │
+│  │   TRIAGE AGENT   │  Classifies content type & source              │
+│  │  (Claude Sonnet) │  Expands collections into individual items     │
+│  │   Every 5 min    │  Deduplicates, assigns priority                │
 │  └────────┬─────────┘                                                │
 │           │ classified items                                         │
 │           ▼                                                          │
 │  ┌──────────────────┐                                                │
-│  │ PROCESSING AGENT  │  Extracts full content & metadata             │
-│  │  (Claude Sonnet)  │  Generates summaries, hot takes, tags         │
-│  │   Every 5 min     │  Performs deep video/audio segmentation       │
-│  │                   │  Detects cross-platform duplicates            │
+│  │ PROCESSING AGENT │  Extracts full content & metadata              │
+│  │  (Claude Sonnet) │  Generates summaries, hot takes, tags          │
+│  │   Every 5 min    │  Performs deep video/audio segmentation        │
+│  │                  │  Detects cross-platform duplicates             │
 │  └────────┬─────────┘                                                │
 │           │                                                          │
 └───────────┼──────────────────────────────────────────────────────────┘
             │ processed content
             ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│              GATEWAZE (Community Management Platform)                 │
+│              GATEWAZE (Community Management Platform)                │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────────┐  │
-│  │                    CONTENT PIPELINE MODULE                      │  │
+│  │                    CONTENT PIPELINE MODULE                     │  │
 │  │        (tables managed within Gatewaze's Supabase instance)    │  │
 │  │                                                                │  │
-│  │  ┌───────────────┐  ┌────────────────┐  ┌──────────────────┐  │  │
-│  │  │ content_items  │  │content_segments│  │content_duplicates│  │  │
-│  │  │ (processed     │  │ (timestamped   │  │ (cross-platform  │  │  │
-│  │  │  content)      │  │  chapters)     │  │  relationships)  │  │  │
-│  │  └───────────────┘  └────────────────┘  └──────────────────┘  │  │
+│  │  ┌───────────────┐  ┌────────────────┐  ┌──────────────────┐   │  │
+│  │  │ content_items │  │content_segments│  │content_duplicates│   │  │
+│  │  │ (processed    │  │ (timestamped   │  │ (cross-platform  │   │  │
+│  │  │  content)     │  │  chapters)     │  │  relationships)  │   │  │
+│  │  └───────────────┘  └────────────────┘  └──────────────────┘   │  │
 │  │                                                                │  │
-│  │  pgvector embeddings  ·  Full-text search  ·  RLS security    │  │
-│  │  Pipeline state tables  ·  Taxonomy  ·  Discovery config      │  │
+│  │  pgvector embeddings  ·  Full-text search  ·  RLS security     │  │
+│  │  Pipeline state tables  ·  Taxonomy  ·  Discovery config       │  │
 │  └────────────────────────────────────────────────────────────────┘  │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────────┐  │
-│  │                     ADMIN UI PAGES                              │  │
+│  │                     ADMIN UI PAGES                             │  │
 │  │  Dashboard · Submissions · Queue · Content · Taxonomy ·        │  │
 │  │  Discovery Sources · Suggestions                               │  │
 │  └────────────────────────────────────────────────────────────────┘  │
