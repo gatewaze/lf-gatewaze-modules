@@ -1,0 +1,14 @@
+{
+  "name": "lf-gatewaze-modules",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "Linux Foundation specific modules for Gatewaze — content pipeline, discovery, and AI-powered content intelligence",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@lf-gatewaze-modules/content-discovery",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "main": "index.ts",
+  "types": "index.ts",
+  "description": "Automated content discovery agent for the content pipeline",
+  "exports": {
+    ".": "./index.ts",
+    "./workers/*": "./workers/*",
+    "./schedulers/*": "./schedulers/*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@gatewaze/shared": "*"
+  }
+}
