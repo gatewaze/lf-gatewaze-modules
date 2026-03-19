@@ -12,7 +12,7 @@ A key differentiator is **deep video indexing**: rather than treating a video as
 
 ## How Gatewaze's Module System Works
 
-Gatewaze is designed as a modular community platform. Modules are self-contained packages that can add database schemas, admin UI pages, API routes, and configuration to a Gatewaze instance. They are auto-discovered from configured sources — local directories, Git repositories, or via the admin UI — and managed through enable/disable toggles. Enabling a module runs its database migrations and lifecycle hooks automatically.
+Gatewaze is a modular community platform built on Supabase (PostgreSQL). Modules are self-contained packages that can add database schemas, admin UI pages, API routes, and configuration to a Gatewaze instance. They are auto-discovered from configured sources — local directories, Git repositories, or via the admin UI — and managed through enable/disable toggles. Enabling a module runs its database migrations against the Gatewaze Supabase instance and executes lifecycle hooks automatically.
 
 The AAIF content intelligence capability is delivered as two modules:
 
@@ -83,8 +83,7 @@ The Content Pipeline module adds a full admin section to Gatewaze with:
 
 | Layer | Technology | Role |
 |-------|-----------|------|
-| Community Platform | **Gatewaze** | Module host, admin UI framework, user management, frontend |
-| Operational Database | **Supabase** (PostgreSQL) | Pipeline state, queues, scheduling, vector search via pgvector |
+| Community Platform | **Gatewaze** (backed by **Supabase**) | Module host, admin UI, user management, frontend, operational database (PostgreSQL), vector search (pgvector), scheduling, edge functions |
 | Agent Development | **Helix.ml** | Visual agent IDE with browser access for building and debugging agents |
 | Agent Runtime (Production) | **Agno** (or equivalent) | Production agent framework with scaling, monitoring, and workflow orchestration |
 | AI Model | **Claude Sonnet 4** | Content analysis, summarization, topic tagging, segmentation |
@@ -130,7 +129,8 @@ The Content Pipeline module adds a full admin section to Gatewaze with:
 │              GATEWAZE (Community Management Platform)                 │
 │                                                                      │
 │  ┌────────────────────────────────────────────────────────────────┐  │
-│  │            CONTENT PIPELINE MODULE (Supabase)                  │  │
+│  │                    CONTENT PIPELINE MODULE                      │  │
+│  │        (tables managed within Gatewaze's Supabase instance)    │  │
 │  │                                                                │  │
 │  │  ┌───────────────┐  ┌────────────────┐  ┌──────────────────┐  │  │
 │  │  │ content_items  │  │content_segments│  │content_duplicates│  │  │
