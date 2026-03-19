@@ -76,7 +76,7 @@ The Content Pipeline module adds a full admin section to Gatewaze with:
 
 1. **Separation of concerns** — The pipeline is split into three independent agent stages (discovery, triage, processing) so failures don't cascade and each stage can scale independently.
 2. **Database as state machine** — All pipeline state, queues, and retry logic live in the database, not in agent orchestration code. This makes the agent runtime swappable.
-3. **Portable agent logic** — Agent prompts and tool definitions are not tightly coupled to any orchestration framework, enabling migration between runtimes as the project matures.
+3. **Portable agent logic** — Agent prompts and tool definitions are not tightly coupled to any orchestration framework. Agents are developed and debugged visually in Helix.ml, then migrated to a production runtime such as Agno once logic is proven.
 4. **Modular and self-contained** — Everything needed to run the content pipeline is packaged in the two modules: database migrations, admin UI, service layer, and agent definitions.
 
 ### Technology Stack
@@ -85,7 +85,8 @@ The Content Pipeline module adds a full admin section to Gatewaze with:
 |-------|-----------|------|
 | Community Platform | **Gatewaze** | Module host, admin UI framework, user management, frontend |
 | Operational Database | **Supabase** (PostgreSQL) | Pipeline state, queues, scheduling, vector search via pgvector |
-| Agent Orchestration | **Helix.ml** (development) / **Agno** (production) | Agent runtime with browser access, LLM integration |
+| Agent Development | **Helix.ml** | Visual agent IDE with browser access for building and debugging agents |
+| Agent Runtime (Production) | **Agno** (or equivalent) | Production agent framework with scaling, monitoring, and workflow orchestration |
 | AI Model | **Claude Sonnet 4** | Content analysis, summarization, topic tagging, segmentation |
 | Content Delivery | **Sanity.io** | Structured CMS for public content, editorial workflows, MCP endpoint |
 
@@ -100,7 +101,7 @@ The Content Pipeline module adds a full admin section to Gatewaze with:
                                │
                                ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│                     AGENT PIPELINE (Helix.ml / Agno)                 │
+│              AGENT PIPELINE (Helix.ml → Production Runtime)           │
 │                                                                      │
 │  ┌──────────────────┐                                                │
 │  │  DISCOVERY AGENT  │  Hourly scheduled scans of configured sources │
@@ -225,6 +226,6 @@ Articles, videos, podcasts, GitHub repositories, tutorials, conference talks, do
 | 4. Discovery Agent | Source scanning, scheduled discovery, full pipeline integration | Built |
 | 5. Frontend | Public website, search (full-text + semantic), deep video search, content submission | Planned |
 | 6. Events & Calendar | Event discovery from online sources, community calendar of agentic AI events | Planned |
-| 7. Production Hardening | Migrate agents to Agno, monitoring/alerting, editorial workflows, rate limiting | Planned |
+| 7. Production Hardening | Migrate agents from Helix to a production runtime (e.g., Agno), monitoring/alerting, editorial workflows, rate limiting | Planned |
 
-The complete backend pipeline is built — from automated discovery through to processed, searchable content. The next milestones are the public-facing frontend and the transition from the Helix.ml development environment to the Agno production runtime.
+The complete backend pipeline is built — from automated discovery through to processed, searchable content. Agents are currently developed and tested in Helix.ml, which provides visual debugging and browser-based agent interaction. Once agent logic is stable, the plan is to migrate to a production-grade agent runtime such as Agno for scaling, monitoring, and workflow orchestration. The next milestones are the public-facing frontend and this production runtime migration.
