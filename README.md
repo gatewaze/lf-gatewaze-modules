@@ -8,6 +8,7 @@ Linux Foundation specific modules for [Gatewaze](https://github.com/gatewaze/gat
 |--------|-------------|
 | `@lf-gatewaze-modules/content-pipeline` | Content pipeline infrastructure: database tables, admin UI, and service layer for content discovery, indexing, and deep video search |
 | `@lf-gatewaze-modules/content-discovery` | Automated discovery agents: workers and schedulers that scan sources (YouTube, RSS, GitHub, Reddit, HN) for new agentic AI content |
+| `@lf-gatewaze-modules/lfid-auth` | LFID authentication via Auth0 — replaces magic link sign-in with LF SSO for portal and admin, with auto-provisioning on event registration |
 
 ## Usage
 
