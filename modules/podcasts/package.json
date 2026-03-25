@@ -1,0 +1,22 @@
+{
+  "name": "@lf-gatewaze-modules/podcasts",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "main": "index.ts",
+  "types": "index.ts",
+  "description": "Manage podcast series, episodes, and guest lists with public guest application forms",
+  "exports": {
+    ".": "./index.ts",
+    "./admin/*": "./admin/*",
+    "./portal/*": "./portal/*",
+    "./migrations/*": "./migrations/*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@gatewaze/shared": "*",
+    "react": "^18.0.0 || ^19.0.0"
+  }
+}
