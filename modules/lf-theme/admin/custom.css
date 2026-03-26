@@ -1,0 +1,21 @@
+/**
+ * LF Theme — Admin CSS Overrides
+ *
+ * This CSS is bundled by the Vite plugin when the theme module's
+ * themeOverrides.admin.customCss path is specified.
+ *
+ * Use this file for admin-specific style tweaks that can't be
+ * expressed via the declarative theme overrides (e.g., custom
+ * component styles, layout adjustments, font overrides).
+ */
+
+/* Override the sidebar brand area */
+.lf-admin-brand {
+  font-family: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* LF blue accent variables */
+:root {
+  --lf-blue: #003764;
+  --lf-blue-light: #0066b3;
+}

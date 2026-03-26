@@ -1,0 +1,19 @@
+{
+  "name": "@lf-gatewaze-modules/lf-theme",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "main": "index.ts",
+  "types": "index.ts",
+  "description": "Linux Foundation brand theme for Gatewaze — overrides admin and portal appearance with LF branding",
+  "exports": {
+    ".": "./index.ts",
+    "./admin/*": "./admin/*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@gatewaze/shared": "*"
+  }
+}
