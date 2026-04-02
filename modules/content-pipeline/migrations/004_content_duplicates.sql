@@ -124,8 +124,13 @@ AS $$
   LIMIT 10;
 $$;
 
--- Enable pg_trgm for fuzzy title matching (used by similarity() function)
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+-- pg_trgm: on Supabase Cloud, enable via Dashboard > Database > Extensions.
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'pg_trgm extension not created (insufficient privileges). Enable it via the Supabase Dashboard.';
+END $$;
 
 -- Add trigram index for fast title similarity searches
 CREATE INDEX IF NOT EXISTS idx_content_items_title_trgm

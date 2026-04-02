@@ -4,8 +4,13 @@
 -- Description: Create all tables for the content intelligence pipeline
 -- ============================================================================
 
--- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "vector";
+-- pgvector: on Supabase Cloud, enable via Dashboard > Database > Extensions.
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS "vector";
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'pgvector extension not created (insufficient privileges). Enable it via the Supabase Dashboard.';
+END $$;
 
 -- ============================================================================
 -- Project Taxonomy — controlled vocabulary of tracked projects
