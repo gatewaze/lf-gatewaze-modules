@@ -88,9 +88,12 @@ export default function ContentItemDetail() {
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
-          <Button variant="ghost" color="gray" onClick={() => navigate('/admin/content-pipeline/items')} className="mb-4">
-            <ArrowLeftIcon className="h-4 w-4 mr-1" /> Back to Content Items
-          </Button>
+          <button
+            onClick={() => navigate('/admin/content-pipeline/items')}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md bg-[var(--gray-a3)] border border-[var(--gray-a5)] text-[var(--gray-11)] hover:bg-[var(--gray-a4)] transition-colors mb-4"
+          >
+            <ArrowLeftIcon className="h-4 w-4" /> Back
+          </button>
 
           <div className="flex items-start gap-4">
             {item.thumbnail_url && (

@@ -19,6 +19,7 @@ import {
 } from '../../utils/podcastService';
 import { Card, Badge, Button } from '@/components/ui';
 import { Page } from '@/components/shared/Page';
+import { useContentCategories } from '@/hooks/useContentCategories';
 
 export default function EpisodeDetailPage() {
   const { podcastId, episodeId } = useParams<{ podcastId: string; episodeId: string }>();
@@ -31,6 +32,7 @@ export default function EpisodeDetailPage() {
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const { contentCategories } = useContentCategories();
   const [editForm, setEditForm] = useState<Partial<PodcastEpisode>>({});
 
   const loadData = useCallback(async () => {
@@ -174,14 +176,12 @@ export default function EpisodeDetailPage() {
     <Page title={episode.title}>
       <div className="p-6">
         {/* Header */}
-        <Button
-          variant="ghost"
-          color="gray"
+        <button
           onClick={() => navigate(`/admin/podcasts/${podcastId}`)}
-          className="mb-4"
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md bg-[var(--gray-a3)] border border-[var(--gray-a5)] text-[var(--gray-11)] hover:bg-[var(--gray-a4)] transition-colors mb-4"
         >
-          <ArrowLeftIcon className="h-4 w-4 mr-1" /> Back to {podcast?.name || 'Podcast'}
-        </Button>
+          <ArrowLeftIcon className="h-4 w-4" /> Back
+        </button>
 
         {/* Episode Details Form */}
         <Card variant="surface" className="p-6 mb-6">
@@ -280,6 +280,21 @@ export default function EpisodeDetailPage() {
                 className="w-full rounded-lg border border-[var(--gray-a6)] bg-[var(--gray-a2)] px-3 py-2 text-sm resize-y"
               />
             </div>
+            {contentCategories.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-[var(--gray-11)] mb-1">Content Category</label>
+                <select
+                  value={(editForm as any).content_category || ''}
+                  onChange={(e) => setEditForm({ ...editForm, content_category: e.target.value || null } as any)}
+                  className="w-full rounded-lg border border-[var(--gray-a6)] bg-[var(--gray-a2)] px-3 py-2 text-sm"
+                >
+                  <option value="">No category</option>
+                  {contentCategories.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div className="flex justify-end mt-4">
             <Button onClick={handleSave} disabled={saving}>
