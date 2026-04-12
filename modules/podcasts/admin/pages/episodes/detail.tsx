@@ -164,7 +164,7 @@ export default function EpisodeDetailPage() {
       <Page title="Episode">
         <div className="p-6">
           <p className="text-[var(--gray-a11)]">Episode not found.</p>
-          <Button variant="outline" onClick={() => navigate(`/admin/podcasts/${podcastId}`)} className="mt-4">
+          <Button variant="outline" onClick={() => navigate(`/admin/podcasts/${podcastId}`)} style={{ marginTop: "1rem" }}>
             Back to Podcast
           </Button>
         </div>

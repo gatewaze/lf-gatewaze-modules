@@ -149,7 +149,7 @@ export default function PodcastDetailPage() {
       <Page title="Podcast">
         <div className="p-6">
           <p className="text-[var(--gray-a11)]">Podcast not found.</p>
-          <Button variant="outline" onClick={() => navigate('/admin/podcasts')} className="mt-4">
+          <Button variant="outline" onClick={() => navigate('/admin/podcasts')} style={{ marginTop: "1rem" }}>
             Back to Podcasts
           </Button>
         </div>

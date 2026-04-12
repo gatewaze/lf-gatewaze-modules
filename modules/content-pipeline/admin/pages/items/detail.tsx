@@ -75,7 +75,7 @@ export default function ContentItemDetail() {
       <Page title="Content Item">
         <div className="p-6">
           <p className="text-[var(--gray-a11)]">Content item not found.</p>
-          <Button variant="outline" onClick={() => navigate('/admin/content-pipeline/items')} className="mt-4">
+          <Button variant="outline" onClick={() => navigate('/admin/content-pipeline/items')} style={{ marginTop: "1rem" }}>
             Back to Content Items
           </Button>
         </div>
