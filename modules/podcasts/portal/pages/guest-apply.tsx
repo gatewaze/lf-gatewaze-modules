@@ -314,7 +314,7 @@ export default function GuestApplyPage({ params, apiUrl }: { params: { slug: str
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 px-6 rounded-lg bg-white text-black font-medium hover:bg-white/90 disabled:bg-white/50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-3 px-6 rounded-lg bg-white/20 text-gray-900 font-medium hover:bg-white/30 disabled:bg-white/10 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? 'Submitting...' : 'Submit Application'}
             </button>
