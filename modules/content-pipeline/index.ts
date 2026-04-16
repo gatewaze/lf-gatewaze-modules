@@ -23,6 +23,7 @@ const contentPipelineModule: GatewazeModule = {
     'migrations/003_monitoring_suggestions.sql',
     'migrations/004_content_duplicates.sql',
     'migrations/005_content_category.sql',
+    'migrations/006_idempotency_keys.sql',
   ],
 
   adminRoutes: [

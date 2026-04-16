@@ -1,10 +1,10 @@
 {
   "name": "@lf-gatewaze-modules/content-discovery",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "license": "UNLICENSED",
   "main": "index.ts",
   "types": "index.ts",
-  "description": "Automated content discovery powered by Helix.ml agents — configuration module for the content pipeline",
+  "description": "Admin-facing control plane for the content discovery pipeline: exposes trigger + status endpoints that dispatch work to the self-hosted Prefect worker (see premium-gatewaze-modules/prefect-worker)",
   "exports": {
     ".": "./index.ts"
   },
