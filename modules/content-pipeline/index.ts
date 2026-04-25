@@ -24,6 +24,8 @@ const contentPipelineModule: GatewazeModule = {
     'migrations/004_content_duplicates.sql',
     'migrations/005_content_category.sql',
     'migrations/006_idempotency_keys.sql',
+    'migrations/007_triage_adapter.sql',
+    'migrations/008_keyword_adapter.sql',
   ],
 
   adminRoutes: [
@@ -77,62 +79,63 @@ const contentPipelineModule: GatewazeModule = {
     },
   ],
 
-  adminNavItems: [
+  // Surfaced inside the Content hub via adminSlots below.
+  // Direct routes kept so legacy bookmarks work but no longer show in nav.
+  adminNavItems: [],
+
+  adminSlots: [
+    // Inbox: items needing human attention
     {
-      path: '/admin/content-pipeline',
-      label: 'Content Pipeline',
-      icon: 'Workflow',
-      requiredFeature: 'content-pipeline',
-      parentGroup: 'admin',
-      order: 40,
-    },
-    {
-      path: '/admin/content-pipeline/submissions',
-      label: 'Submissions',
-      icon: 'Inbox',
+      slotName: 'content-hub:inbox',
+      component: () => import('./admin/pages/submissions'),
+      order: 20,
       requiredFeature: 'content-pipeline.submissions',
-      parentGroup: 'admin',
-      order: 41,
+      meta: { tabId: 'submissions', label: 'Submissions', description: 'User-submitted content awaiting decision' },
     },
+    // Library: what we have
     {
-      path: '/admin/content-pipeline/queue',
-      label: 'Processing Queue',
-      icon: 'ListOrdered',
-      requiredFeature: 'content-pipeline.queue',
-      parentGroup: 'admin',
-      order: 42,
-    },
-    {
-      path: '/admin/content-pipeline/items',
-      label: 'Content Items',
-      icon: 'Library',
+      slotName: 'content-hub:library',
+      component: () => import('./admin/pages/items/index'),
+      order: 10,
       requiredFeature: 'content-pipeline.items',
-      parentGroup: 'admin',
-      order: 43,
+      meta: { tabId: 'items', label: 'Content Items', description: 'Browse all ingested content' },
     },
+    // Rules: how content is classified
     {
-      path: '/admin/content-pipeline/taxonomy',
-      label: 'Taxonomy',
-      icon: 'Tags',
+      slotName: 'content-hub:rules',
+      component: () => import('./admin/pages/taxonomy'),
+      order: 40,
       requiredFeature: 'content-pipeline.taxonomy',
-      parentGroup: 'admin',
-      order: 44,
+      meta: { tabId: 'taxonomy', label: 'Taxonomy', description: 'Topic + project taxonomies for classification' },
+    },
+    // Sources: where content comes from + pipeline state
+    {
+      slotName: 'content-hub:sources',
+      component: () => import('./admin/pages/index'),
+      order: 5,
+      requiredFeature: 'content-pipeline',
+      meta: { tabId: 'pipeline-overview', label: 'Pipeline Overview', description: 'Health and stats for the content pipeline' },
     },
     {
-      path: '/admin/content-pipeline/discovery',
-      label: 'Discovery Sources',
-      icon: 'Radar',
+      slotName: 'content-hub:sources',
+      component: () => import('./admin/pages/discovery'),
+      order: 10,
       requiredFeature: 'content-pipeline.discovery',
-      parentGroup: 'admin',
-      order: 45,
+      meta: { tabId: 'discovery', label: 'Discovery Sources', description: 'Configured sources the pipeline ingests from' },
     },
     {
-      path: '/admin/content-pipeline/suggestions',
-      label: 'Monitoring Suggestions',
-      icon: 'Lightbulb',
+      slotName: 'content-hub:sources',
+      component: () => import('./admin/pages/suggestions'),
+      order: 20,
       requiredFeature: 'content-pipeline.suggestions',
-      parentGroup: 'admin',
-      order: 46,
+      meta: { tabId: 'monitoring-suggestions', label: 'Monitoring Suggestions', description: 'Auto-suggested new sources to add' },
+    },
+    {
+      slotName: 'content-hub:sources',
+      component: () => import('./admin/pages/queue'),
+      order: 30,
+      requiredFeature: 'content-pipeline.queue',
+      meta: { tabId: 'processing-queue', label: 'Processing Queue', description: 'In-flight pipeline jobs' },
     },
   ],
 

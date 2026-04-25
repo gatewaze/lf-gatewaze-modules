@@ -16,6 +16,8 @@ const podcastsModule: GatewazeModule = {
   migrations: [
     'migrations/001_podcasts_tables.sql',
     'migrations/002_content_category.sql',
+    'migrations/003_triage_adapter.sql',
+    'migrations/004_keyword_adapter.sql',
   ],
 
   apiRoutes: async (app: unknown, context?: ModuleContext) => {
