@@ -10,6 +10,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='gatewaze_module_writer') THEN
     CREATE ROLE gatewaze_module_writer NOLOGIN BYPASSRLS;
   END IF;
+  -- Grant the role to the calling user so subsequent ALTER TABLE
+  -- ... OWNER TO gatewaze_module_writer doesn't trip 42501 on
+  -- Supabase Cloud (where postgres isn't a true superuser and needs
+  -- explicit role membership to transfer ownership).
+  EXECUTE format('GRANT gatewaze_module_writer TO %I', current_user);
 END $migration$;
 
 CREATE OR REPLACE FUNCTION public.podcast_episodes_keyword_text(p_content_id uuid)
