@@ -35,7 +35,9 @@ AS $$
 $$;
 
 CREATE OR REPLACE FUNCTION public.podcasts_ck_enqueue() RETURNS trigger
-LANGUAGE plpgsql AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 BEGIN
   IF (TG_OP = 'DELETE') THEN
     INSERT INTO public.content_keyword_match_queue (content_type, content_id, op)
@@ -51,6 +53,7 @@ BEGIN
     RETURN NEW;
   END IF;
 END $$;
+ALTER FUNCTION public.podcasts_ck_enqueue() OWNER TO gatewaze_module_writer;
 DROP TRIGGER IF EXISTS podcasts_ck_enqueue_trg ON public.podcast_episodes;
 CREATE TRIGGER podcasts_ck_enqueue_trg
   AFTER INSERT OR UPDATE OF title, description OR DELETE ON public.podcast_episodes

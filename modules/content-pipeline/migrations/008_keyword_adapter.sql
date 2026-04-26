@@ -35,7 +35,9 @@ AS $$
 $$;
 
 CREATE OR REPLACE FUNCTION public.content_items_ck_enqueue() RETURNS trigger
-LANGUAGE plpgsql AS $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 BEGIN
   IF (TG_OP = 'DELETE') THEN
     INSERT INTO public.content_keyword_match_queue (content_type, content_id, op)
@@ -51,6 +53,7 @@ BEGIN
     RETURN NEW;
   END IF;
 END $$;
+ALTER FUNCTION public.content_items_ck_enqueue() OWNER TO gatewaze_module_writer;
 DROP TRIGGER IF EXISTS content_items_ck_enqueue_trg ON public.content_items;
 CREATE TRIGGER content_items_ck_enqueue_trg
   AFTER INSERT OR UPDATE OF title, summary, topics, projects, author OR DELETE
