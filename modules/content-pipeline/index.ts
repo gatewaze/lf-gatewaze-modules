@@ -17,6 +17,8 @@ const contentPipelineModule: GatewazeModule = {
     'content-pipeline.suggestions',
   ],
 
+  dependencies: ['content-platform'],
+
   migrations: [
     'migrations/001_content_pipeline_tables.sql',
     'migrations/002_seed_taxonomy.sql',
@@ -26,6 +28,7 @@ const contentPipelineModule: GatewazeModule = {
     'migrations/006_idempotency_keys.sql',
     'migrations/007_triage_adapter.sql',
     'migrations/008_keyword_adapter.sql',
+    'migrations/009_register_with_platform.sql',
   ],
 
   adminRoutes: [

@@ -18,7 +18,7 @@ const membershipModule: GatewazeModule = {
     'membership.sync',
   ],
 
-  dependencies: ['content-keywords'],
+  dependencies: ['content-keywords', 'content-platform'],
 
   apiRoutes: async (app: unknown, context?: ModuleContext) => {
     const { registerRoutes } = await import('./api');
@@ -38,6 +38,7 @@ const membershipModule: GatewazeModule = {
     'migrations/002_keyword_rule_sync.sql',
     'migrations/003_extend_events_adapter.sql',
     'migrations/004_seed_aaif_tier_ranks.sql',
+    'migrations/005_universal_category_trigger.sql',
   ],
 
   // Surfaced inside the Content hub via adminSlots — Library tab.

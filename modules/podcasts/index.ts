@@ -13,11 +13,14 @@ const podcastsModule: GatewazeModule = {
     'podcasts.guest-list',
   ],
 
+  dependencies: ['content-platform'],
+
   migrations: [
     'migrations/001_podcasts_tables.sql',
     'migrations/002_content_category.sql',
     'migrations/003_triage_adapter.sql',
     'migrations/004_keyword_adapter.sql',
+    'migrations/005_register_with_platform.sql',
   ],
 
   apiRoutes: async (app: unknown, context?: ModuleContext) => {
