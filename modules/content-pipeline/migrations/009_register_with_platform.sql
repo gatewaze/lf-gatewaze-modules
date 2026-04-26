@@ -20,7 +20,7 @@ BEGIN
       WHEN triage_status = 'pending_review' THEN 'pending_review'
       WHEN triage_status = 'rejected'       THEN 'rejected'
       ELSE 'published'  -- 'approved' default
-    END;
+    END WHERE TRUE;
     COMMENT ON COLUMN public.content_items.triage_status IS
       'DEPRECATED — superseded by publish_state. To be dropped in next release.';
     COMMENT ON COLUMN public.content_items.needs_review IS

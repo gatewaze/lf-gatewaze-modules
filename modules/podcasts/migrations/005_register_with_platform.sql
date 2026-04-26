@@ -18,7 +18,7 @@ BEGIN
     WHEN status IN ('draft','scheduled','recording','editing') THEN 'draft'
     WHEN status = 'archived'       THEN 'unpublished'
     ELSE 'published'  -- published + anything else
-  END;
+  END WHERE TRUE;
 END $backfill$;
 
 CREATE INDEX IF NOT EXISTS podcast_episodes_publish_state_live
