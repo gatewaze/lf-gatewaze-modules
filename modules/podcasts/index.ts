@@ -29,48 +29,42 @@ const podcastsModule: GatewazeModule = {
   },
 
   adminRoutes: [
+    // Static '/podcasts/guests' must be declared before the ':podcastId'
+    // dynamic route so React Router matches the literal first.
     {
       path: 'podcasts',
-      component: () => import('./admin/pages/index'),
+      component: () => import('./admin/pages/PodcastsShell'),
       requiredFeature: 'podcasts',
-      guard: 'admin',
+      guard: 'none',
     },
     {
       path: 'podcasts/guests',
-      component: () => import('./admin/pages/guests/index'),
+      component: () => import('./admin/pages/PodcastsShell'),
       requiredFeature: 'podcasts.guest-list',
-      guard: 'admin',
+      guard: 'none',
     },
     {
       path: 'podcasts/:podcastId',
       component: () => import('./admin/pages/detail'),
       requiredFeature: 'podcasts.manage',
-      guard: 'admin',
+      guard: 'none',
     },
     {
       path: 'podcasts/:podcastId/episodes/:episodeId',
       component: () => import('./admin/pages/episodes/detail'),
       requiredFeature: 'podcasts.manage',
-      guard: 'admin',
+      guard: 'none',
     },
   ],
 
   adminNavItems: [
     {
-      path: '/admin/podcasts',
+      path: '/podcasts',
       label: 'Podcasts',
       icon: 'Microphone',
       requiredFeature: 'podcasts',
-      parentGroup: 'admin',
-      order: 50,
-    },
-    {
-      path: '/admin/podcasts/guests',
-      label: 'Guest List',
-      icon: 'Users',
-      requiredFeature: 'podcasts.guest-list',
-      parentGroup: 'admin',
-      order: 51,
+      parentGroup: 'dashboards',
+      order: 17,
     },
   ],
 

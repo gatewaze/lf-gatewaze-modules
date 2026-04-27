@@ -87,9 +87,9 @@ const contentPipelineModule: GatewazeModule = {
   adminNavItems: [],
 
   adminSlots: [
-    // Inbox: items needing human attention
+    // Submissions tab on the unified Inbox at /admin/inbox
     {
-      slotName: 'content-hub:inbox',
+      slotName: 'content-platform:inbox-tab',
       component: () => import('./admin/pages/submissions'),
       order: 20,
       requiredFeature: 'content-pipeline.submissions',
