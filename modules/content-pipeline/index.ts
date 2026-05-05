@@ -29,6 +29,7 @@ const contentPipelineModule: GatewazeModule = {
     'migrations/007_triage_adapter.sql',
     'migrations/008_keyword_adapter.sql',
     'migrations/009_register_with_platform.sql',
+    'migrations/010_register_category_adapter.sql',
   ],
 
   adminRoutes: [
