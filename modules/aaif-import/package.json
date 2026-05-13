@@ -1,0 +1,33 @@
+{
+  "name": "@lf-gatewaze-modules/aaif-import",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "Sanity-to-Gatewaze migration tooling for the AAIF brand site. Converts AAIF's Sanity Studio schemas + content into Gatewaze sites-module rows (templates_block_defs, site_personas, page_blocks, page_variants).",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./lib/*": "./lib/*",
+    "./scripts/*": "./scripts/*"
+  },
+  "scripts": {
+    "convert:block-defs": "tsx scripts/convert-block-defs.ts",
+    "convert:tier-defs": "tsx scripts/convert-tier-defs.ts",
+    "convert:page-content": "tsx scripts/convert-page-content.ts",
+    "apply-seed": "tsx scripts/apply-seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "ts-morph": "^25.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.19",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.0"
+  }
+}

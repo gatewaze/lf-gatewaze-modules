@@ -1,0 +1,67 @@
+{
+  "personas": [
+    {
+      "site_id": "ebc32e3d-e877-40ce-8083-2d4a4c29f9aa",
+      "name": "enterprise-buyer",
+      "label": "Enterprise Buyer",
+      "description": null,
+      "is_default": false,
+      "priority": 2,
+      "conditions": [
+        {
+          "axis": "utm.campaign",
+          "operator": "eq",
+          "value": "enterprise-buyer",
+          "persist": false
+        }
+      ]
+    },
+    {
+      "site_id": "ebc32e3d-e877-40ce-8083-2d4a4c29f9aa",
+      "name": "developer",
+      "label": "Developer",
+      "description": null,
+      "is_default": true,
+      "priority": 10,
+      "conditions": []
+    },
+    {
+      "site_id": "ebc32e3d-e877-40ce-8083-2d4a4c29f9aa",
+      "name": "agentic-ai",
+      "label": "Agentic AI",
+      "description": null,
+      "is_default": false,
+      "priority": 1,
+      "conditions": [
+        {
+          "axis": "utm.campaign",
+          "operator": "eq",
+          "value": "agentic-ai",
+          "persist": true
+        }
+      ]
+    },
+    {
+      "site_id": "ebc32e3d-e877-40ce-8083-2d4a4c29f9aa",
+      "name": "members",
+      "label": "Members",
+      "description": null,
+      "is_default": false,
+      "priority": 2,
+      "conditions": [
+        {
+          "axis": "utm.campaign",
+          "operator": "eq",
+          "value": "members",
+          "persist": true
+        }
+      ]
+    }
+  ],
+  "idMap": {
+    "e398cada-ad8d-488e-8968-8337c4239d41": "enterprise-buyer",
+    "f11a0dc8-eaf6-411a-86ff-7a8db8c21537": "developer",
+    "8aabbdf4-f853-4aba-9cef-4fc4a0ee3d82": "agentic-ai",
+    "7775b48f-955e-4698-862e-c5d501b4267e": "members"
+  }
+}

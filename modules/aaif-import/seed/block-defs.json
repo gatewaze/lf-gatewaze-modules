@@ -1,0 +1,1646 @@
+[
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "faq",
+    "name": "FAQ",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "FAQ",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Image",
+          "x-gatewaze-group": "media",
+          "type": "string",
+          "format": "image"
+        },
+        "eyebrow": {
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "heading": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6"
+              ]
+            },
+            "fontSize": {
+              "type": "string",
+              "enum": [
+                "XS",
+                "S",
+                "M",
+                "L",
+                "XL",
+                "2XL",
+                "3XL",
+                "4XL",
+                "5XL"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "cta": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "variant": {
+              "type": "string",
+              "enum": [
+                "default",
+                "secondary",
+                "text"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "internal",
+                "external",
+                "relative",
+                "email",
+                "phone"
+              ]
+            },
+            "internal": {
+              "type": "string",
+              "format": "ref-page"
+            },
+            "external": {
+              "type": "string",
+              "format": "uri"
+            },
+            "relative": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string",
+              "enum": [
+                "_self",
+                "_blank"
+              ],
+              "default": "_self"
+            }
+          }
+        },
+        "faqs": {
+          "x-gatewaze-group": "content",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": {
+                "type": "string"
+              },
+              "answer": {
+                "type": "string",
+                "format": "richtext"
+              }
+            },
+            "required": [
+              "question",
+              "answer"
+            ]
+          }
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/faq.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "findEvents",
+    "name": "Find Events",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Find Events",
+      "properties": {
+        "name": {
+          "title": "Label",
+          "description": "Editor-only label to identify this block (e.g. \"Homepage events\").",
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/findEvents.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "findYourWayIn",
+    "name": "Find Your Way In",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Find Your Way In",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Image",
+          "x-gatewaze-group": "media",
+          "type": "string",
+          "format": "image"
+        },
+        "tabsParentLabel": {
+          "title": "Tabs Parent Label",
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "tabs": {
+          "title": "Tabs",
+          "x-gatewaze-group": "content",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "title": "Tab Label",
+                "x-gatewaze-group": "content",
+                "type": "string"
+              },
+              "chip": {
+                "title": "Tab Chip Text",
+                "x-gatewaze-group": "content",
+                "type": "string"
+              },
+              "title": {
+                "x-gatewaze-group": "content",
+                "type": "string"
+              },
+              "description": {
+                "x-gatewaze-group": "content",
+                "type": "string",
+                "format": "richtext"
+              },
+              "cta": {
+                "x-gatewaze-group": "content",
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "secondary",
+                      "text"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external",
+                      "relative",
+                      "email",
+                      "phone"
+                    ]
+                  },
+                  "internal": {
+                    "type": "string",
+                    "format": "ref-page"
+                  },
+                  "external": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "relative": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "_self",
+                      "_blank"
+                    ],
+                    "default": "_self"
+                  }
+                }
+              },
+              "image": {
+                "x-gatewaze-group": "media",
+                "type": "string",
+                "format": "image"
+              }
+            },
+            "required": [
+              "label"
+            ]
+          }
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/findYourWayIn.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "hero",
+    "name": "Hero",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Hero",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Video",
+          "x-gatewaze-group": "media",
+          "type": "object",
+          "properties": {
+            "videoType": {
+              "title": "Video Type",
+              "default": "file",
+              "enum": [
+                "file",
+                "url"
+              ],
+              "type": "string"
+            },
+            "videoFile": {
+              "title": "Video",
+              "type": "string",
+              "format": "file-url"
+            },
+            "videoUrl": {
+              "title": "Video URL",
+              "description": "Enter URL or local path (e.g., /assets/video.mp4)",
+              "type": "string"
+            },
+            "thumbnail": {
+              "title": "Thumbnail",
+              "description": "Image File (required)",
+              "type": "string",
+              "format": "image"
+            }
+          }
+        },
+        "heading": {
+          "description": "Main hero heading displayed at the top of the section.",
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6"
+              ]
+            },
+            "fontSize": {
+              "type": "string",
+              "enum": [
+                "XS",
+                "S",
+                "M",
+                "L",
+                "XL",
+                "2XL",
+                "3XL",
+                "4XL",
+                "5XL"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "emphasis": {
+          "title": "Emphasis Text",
+          "description": "Highlighted text rendered with the gradient below the main heading. Used on desktop.",
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "emphasisMobile": {
+          "title": "Emphasis Text (Mobile)",
+          "description": "Optional mobile-only override. Press Enter to insert line breaks. Falls back to the desktop value when empty.",
+          "x-gatewaze-group": "content",
+          "type": "string",
+          "format": "textarea"
+        },
+        "description": {
+          "x-gatewaze-group": "content",
+          "type": "string",
+          "format": "richtext"
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/hero.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "mediaContentHub",
+    "name": "Media Content Hub",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Media Content Hub",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Video",
+          "x-gatewaze-group": "media",
+          "type": "object",
+          "properties": {
+            "videoType": {
+              "title": "Video Type",
+              "default": "file",
+              "enum": [
+                "file",
+                "url"
+              ],
+              "type": "string"
+            },
+            "videoFile": {
+              "title": "Video",
+              "type": "string",
+              "format": "file-url"
+            },
+            "videoUrl": {
+              "title": "Video URL",
+              "description": "Enter URL or local path (e.g., /assets/video.mp4)",
+              "type": "string"
+            },
+            "thumbnail": {
+              "title": "Thumbnail",
+              "description": "Image File (required)",
+              "type": "string",
+              "format": "image"
+            }
+          }
+        },
+        "eyebrow": {
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "heading": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6"
+              ]
+            },
+            "fontSize": {
+              "type": "string",
+              "enum": [
+                "XS",
+                "S",
+                "M",
+                "L",
+                "XL",
+                "2XL",
+                "3XL",
+                "4XL",
+                "5XL"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "description": {
+          "x-gatewaze-group": "content",
+          "type": "string",
+          "format": "richtext"
+        },
+        "tabs": {
+          "title": "Tabs",
+          "x-gatewaze-group": "content",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "title": "Tab Label",
+                "x-gatewaze-group": "content",
+                "type": "string"
+              },
+              "cta": {
+                "x-gatewaze-group": "content",
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "secondary",
+                      "text"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external",
+                      "relative",
+                      "email",
+                      "phone"
+                    ]
+                  },
+                  "internal": {
+                    "type": "string",
+                    "format": "ref-page"
+                  },
+                  "external": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "relative": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "_self",
+                      "_blank"
+                    ],
+                    "default": "_self"
+                  }
+                }
+              }
+            },
+            "required": [
+              "label"
+            ]
+          }
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/mediaContentHub.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "meetup",
+    "name": "Meetup",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Meetup",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Image",
+          "x-gatewaze-group": "media",
+          "type": "string",
+          "format": "image"
+        },
+        "meetupRows": {
+          "title": "Meetup Rows",
+          "x-gatewaze-group": "content",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "eyebrow": {
+                "type": "string"
+              },
+              "heading": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "h1",
+                      "h2",
+                      "h3",
+                      "h4",
+                      "h5",
+                      "h6"
+                    ]
+                  },
+                  "fontSize": {
+                    "type": "string",
+                    "enum": [
+                      "XS",
+                      "S",
+                      "M",
+                      "L",
+                      "XL",
+                      "2XL",
+                      "3XL",
+                      "4XL",
+                      "5XL"
+                    ]
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "format": "richtext"
+              },
+              "list": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "icon": {
+                      "type": "string",
+                      "format": "image"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string",
+                      "format": "richtext"
+                    }
+                  }
+                }
+              },
+              "primaryCTA": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "secondary",
+                      "text"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external",
+                      "relative",
+                      "email",
+                      "phone"
+                    ]
+                  },
+                  "internal": {
+                    "type": "string",
+                    "format": "ref-page"
+                  },
+                  "external": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "relative": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "_self",
+                      "_blank"
+                    ],
+                    "default": "_self"
+                  }
+                }
+              },
+              "secondaryCTA": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "secondary",
+                      "text"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external",
+                      "relative",
+                      "email",
+                      "phone"
+                    ]
+                  },
+                  "internal": {
+                    "type": "string",
+                    "format": "ref-page"
+                  },
+                  "external": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "relative": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "_self",
+                      "_blank"
+                    ],
+                    "default": "_self"
+                  }
+                }
+              },
+              "image": {
+                "type": "string",
+                "format": "image"
+              }
+            }
+          }
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/meetup.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "projects",
+    "name": "Projects",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Projects",
+      "properties": {
+        "name": {
+          "title": "Label",
+          "description": "Editor-only label to identify this block (e.g. \"Homepage featured projects\").",
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/projects.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "subscription",
+    "name": "Subscription",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Subscription",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Image",
+          "x-gatewaze-group": "media",
+          "type": "string",
+          "format": "image"
+        },
+        "eyebrow": {
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "heading": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6"
+              ]
+            },
+            "fontSize": {
+              "type": "string",
+              "enum": [
+                "XS",
+                "S",
+                "M",
+                "L",
+                "XL",
+                "2XL",
+                "3XL",
+                "4XL",
+                "5XL"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "description": {
+          "x-gatewaze-group": "content",
+          "type": "string",
+          "format": "richtext"
+        },
+        "primaryCTA": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "variant": {
+              "type": "string",
+              "enum": [
+                "default",
+                "secondary",
+                "text"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "internal",
+                "external",
+                "relative",
+                "email",
+                "phone"
+              ]
+            },
+            "internal": {
+              "type": "string",
+              "format": "ref-page"
+            },
+            "external": {
+              "type": "string",
+              "format": "uri"
+            },
+            "relative": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string",
+              "enum": [
+                "_self",
+                "_blank"
+              ],
+              "default": "_self"
+            }
+          }
+        },
+        "secondaryCTA": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "variant": {
+              "type": "string",
+              "enum": [
+                "default",
+                "secondary",
+                "text"
+              ]
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "internal",
+                "external",
+                "relative",
+                "email",
+                "phone"
+              ]
+            },
+            "internal": {
+              "type": "string",
+              "format": "ref-page"
+            },
+            "external": {
+              "type": "string",
+              "format": "uri"
+            },
+            "relative": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string",
+              "enum": [
+                "_self",
+                "_blank"
+              ],
+              "default": "_self"
+            }
+          }
+        },
+        "dialogBackgroundMedia": {
+          "title": "Dialog Background Image",
+          "x-gatewaze-group": "media",
+          "type": "string",
+          "format": "image"
+        },
+        "dialogEyebrow": {
+          "x-gatewaze-group": "dialog",
+          "type": "string"
+        },
+        "dialogHeading": {
+          "x-gatewaze-group": "dialog",
+          "type": "string"
+        },
+        "dialogFormId": {
+          "x-gatewaze-group": "dialog",
+          "type": "string"
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/subscription.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "tabsCTA",
+    "name": "Tabs CTA",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Tabs CTA",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Image",
+          "x-gatewaze-group": "media",
+          "type": "string",
+          "format": "image"
+        },
+        "eyebrow": {
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "heading": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6"
+              ]
+            },
+            "fontSize": {
+              "type": "string",
+              "enum": [
+                "XS",
+                "S",
+                "M",
+                "L",
+                "XL",
+                "2XL",
+                "3XL",
+                "4XL",
+                "5XL"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "description": {
+          "x-gatewaze-group": "content",
+          "type": "string",
+          "format": "richtext"
+        },
+        "tabs": {
+          "title": "Tabs",
+          "x-gatewaze-group": "content",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "title": "Tab Label",
+                "x-gatewaze-group": "content",
+                "type": "string"
+              },
+              "eyebrow": {
+                "x-gatewaze-group": "content",
+                "type": "string"
+              },
+              "title": {
+                "x-gatewaze-group": "content",
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "h1",
+                      "h2",
+                      "h3",
+                      "h4",
+                      "h5",
+                      "h6"
+                    ]
+                  },
+                  "fontSize": {
+                    "type": "string",
+                    "enum": [
+                      "XS",
+                      "S",
+                      "M",
+                      "L",
+                      "XL",
+                      "2XL",
+                      "3XL",
+                      "4XL",
+                      "5XL"
+                    ]
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              },
+              "description": {
+                "x-gatewaze-group": "content",
+                "type": "string",
+                "format": "richtext"
+              },
+              "primaryCTA": {
+                "x-gatewaze-group": "content",
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "secondary",
+                      "text"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external",
+                      "relative",
+                      "email",
+                      "phone"
+                    ]
+                  },
+                  "internal": {
+                    "type": "string",
+                    "format": "ref-page"
+                  },
+                  "external": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "relative": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "_self",
+                      "_blank"
+                    ],
+                    "default": "_self"
+                  }
+                }
+              },
+              "secondaryCTA": {
+                "x-gatewaze-group": "content",
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "secondary",
+                      "text"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external",
+                      "relative",
+                      "email",
+                      "phone"
+                    ]
+                  },
+                  "internal": {
+                    "type": "string",
+                    "format": "ref-page"
+                  },
+                  "external": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "relative": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "_self",
+                      "_blank"
+                    ],
+                    "default": "_self"
+                  }
+                }
+              },
+              "image": {
+                "x-gatewaze-group": "media",
+                "type": "string",
+                "format": "image"
+              }
+            },
+            "required": [
+              "label"
+            ]
+          }
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/tabsCTA.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "testimonial",
+    "name": "Testimonial",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Testimonial",
+      "properties": {
+        "eyebrow": {
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "heading": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6"
+              ]
+            },
+            "fontSize": {
+              "type": "string",
+              "enum": [
+                "XS",
+                "S",
+                "M",
+                "L",
+                "XL",
+                "2XL",
+                "3XL",
+                "4XL",
+                "5XL"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "description": {
+          "x-gatewaze-group": "content",
+          "type": "string",
+          "format": "richtext"
+        },
+        "testimonials": {
+          "x-gatewaze-group": "content",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "quote": {
+                "type": "string",
+                "format": "richtext"
+              },
+              "author": {
+                "type": "string"
+              },
+              "avatar": {
+                "type": "string",
+                "format": "image"
+              }
+            },
+            "required": [
+              "quote"
+            ]
+          }
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/testimonial.ts",
+    "conversion_warnings": []
+  },
+  {
+    "library_id": "00000000-aaaa-aaaa-aaaa-000000000001",
+    "key": "writtenContentHub",
+    "name": "Written Content Hub",
+    "description": null,
+    "schema": {
+      "type": "object",
+      "title": "Written Content Hub",
+      "properties": {
+        "backgroundMedia": {
+          "title": "Background Image",
+          "x-gatewaze-group": "media",
+          "type": "string",
+          "format": "image"
+        },
+        "eyebrow": {
+          "x-gatewaze-group": "content",
+          "type": "string"
+        },
+        "heading": {
+          "x-gatewaze-group": "content",
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6"
+              ]
+            },
+            "fontSize": {
+              "type": "string",
+              "enum": [
+                "XS",
+                "S",
+                "M",
+                "L",
+                "XL",
+                "2XL",
+                "3XL",
+                "4XL",
+                "5XL"
+              ]
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "description": {
+          "x-gatewaze-group": "content",
+          "type": "string",
+          "format": "richtext"
+        },
+        "tabs": {
+          "title": "Tabs",
+          "x-gatewaze-group": "content",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "title": "Tab Label",
+                "x-gatewaze-group": "content",
+                "type": "string"
+              },
+              "type": {
+                "title": "Type",
+                "x-gatewaze-group": "content",
+                "default": "blog",
+                "enum": [
+                  "blog",
+                  "event",
+                  "podcast",
+                  "pressNews"
+                ],
+                "type": "string"
+              },
+              "blogItems": {
+                "x-gatewaze-group": "content",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "ref-blog",
+                  "x-aaif-ref-to": [
+                    "blog"
+                  ]
+                }
+              },
+              "eventItems": {
+                "x-gatewaze-group": "content",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "ref-event",
+                  "x-aaif-ref-to": [
+                    "event"
+                  ]
+                }
+              },
+              "podcastItems": {
+                "x-gatewaze-group": "content",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "ref-podcast",
+                  "x-aaif-ref-to": [
+                    "podcast"
+                  ]
+                }
+              },
+              "pressNewsItems": {
+                "x-gatewaze-group": "content",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "ref-pressNews",
+                  "x-aaif-ref-to": [
+                    "pressNews"
+                  ]
+                }
+              },
+              "cta": {
+                "x-gatewaze-group": "content",
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "secondary",
+                      "text"
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external",
+                      "relative",
+                      "email",
+                      "phone"
+                    ]
+                  },
+                  "internal": {
+                    "type": "string",
+                    "format": "ref-page"
+                  },
+                  "external": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "relative": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "_self",
+                      "_blank"
+                    ],
+                    "default": "_self"
+                  }
+                }
+              }
+            },
+            "required": [
+              "label",
+              "type"
+            ]
+          }
+        },
+        "visibleTo": {
+          "title": "Visible to",
+          "description": "Tiers that see this block. Empty = all tiers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "ref-tierDefinition",
+            "x-aaif-ref-to": [
+              "tierDefinition"
+            ]
+          }
+        }
+      }
+    },
+    "has_bricks": false,
+    "theme_kind": "website",
+    "html": "",
+    "is_current": true,
+    "source_file": "studio/src/schemas/objects/blocks/writtenContentHub.ts",
+    "conversion_warnings": []
+  }
+]

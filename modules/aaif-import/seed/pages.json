@@ -1,0 +1,2679 @@
+[
+  {
+    "id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+    "site_id": "ebc32e3d-e877-40ce-8083-2d4a4c29f9aa",
+    "slug": "home",
+    "full_path": "/",
+    "title": "Home",
+    "composition_mode": "blocks",
+    "blocks": [
+      {
+        "id": "3707de76-f995-40b4-a2d6-da23a19d1b53",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "findYourWayIn",
+        "sort_order": 1,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/a27331832d6de367b98cf3241228b73b046a403c-3816x2145.webp",
+            "_type": "image"
+          },
+          "tabs": [
+            {
+              "_key": "7e405b55cd38",
+              "chip": "Developers",
+              "cta": {
+                "_type": "cta",
+                "external": "https://modelcontextprotocol.io",
+                "label": "Explore MCP",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "86885cb19c2f",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "12ab69ad4f1b",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access MCP specs, join the developer forum, and shape the protocols your code will run on. No gatekeeping. No politics."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/4f442d11d40837dfb70f1dcd1bb2a945bf7fe01e-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Developer",
+              "title": "Build with open standards"
+            },
+            {
+              "_key": "a15d8fac5683",
+              "chip": "Enterprise",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "a11717bbf23a",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "5c2521c68668",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access vetted standards, reduce vendor lock-in, and align your stack with protocols built for long-term scale. Make decisions backed by an open ecosystem—not closed promises."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/38dfc3bdf8f39ebfd9c3ba82c8424395f51524dc-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Enterprise Buyer",
+              "title": "Adopt with confidence"
+            },
+            {
+              "_key": "19e636a70172",
+              "chip": "Startups",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "f94c02fef175",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "e974716a2a7d",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Move fast without rebuilding the wheel. Plug into open standards, collaborate with builders, and launch on foundations designed to scale with you. Build once—grow everywhere."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/74cd38b98a4e0ce861d3cd44f96fde27877833af-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Startup",
+              "title": "Empower startups with open standards"
+            },
+            {
+              "_key": "bf135bc2c337",
+              "chip": "Researchers",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "6a022152d091",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "dd449fc6b454",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access open specifications, collaborate across disciplines, and turn research into real-world standards that shape the future of AI."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/b4b0ada9ba21ce7b5371ef2eb4d17de1f353c779-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Researcher",
+              "title": "Explore, and contribute at the protocol level"
+            },
+            {
+              "_key": "0f2f2527024d",
+              "chip": "Policy Makers",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "f716237845b7",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "804d5326494e",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Understand how protocols evolve, contribute to responsible frameworks, and help shape an open, interoperable AI ecosystem."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/bba74b6bb6768bdec45d8b5345f0f426db2607d3-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Policy Maker",
+              "title": "Create transparent, community-driven standards."
+            }
+          ],
+          "tabsParentLabel": "I am a :"
+        }
+      },
+      {
+        "id": "45299eb0-7bb5-4dbc-95d2-9d80932431b2",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "subscription",
+        "sort_order": 2,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/895c17d70a815dcbf687d9d5adabd3299a79a393-3816x1449.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "e07dd381457d",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "3fb0d0a04789",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Weekly signal on standards, governance, and the people building the future. No fluff. Just what matters."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "dialogBackgroundMedia": {
+            "_sanityAsset": "image@file://./images/32df995d89d9d5784c4349548632ff9e39b6f093-2514x840.webp",
+            "_type": "image"
+          },
+          "dialogEyebrow": "Subscribe to our singals",
+          "dialogHeading": "Stay connected to what is happening",
+          "eyebrow": "Subscribe",
+          "heading": {
+            "_type": "heading",
+            "text": "Subscribe to the AAIF Briefing",
+            "type": "h2"
+          },
+          "primaryCTA": {
+            "_type": "cta",
+            "label": "Subscribe",
+            "type": "internal",
+            "variant": "default"
+          },
+          "secondaryCTA": {
+            "_type": "cta",
+            "external": "https://aaif.io/subscribe",
+            "label": "About AAIF",
+            "type": "external",
+            "variant": "secondary"
+          }
+        }
+      },
+      {
+        "id": "8ce902f5-9435-4cdb-8562-0f33ea0bef25",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "meetup",
+        "sort_order": 3,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/2ec5e288e4f20b2d28934ae78eff1da3795ef613-4320x3792.webp",
+            "_type": "image"
+          },
+          "meetupRows": [
+            {
+              "_key": "58b7191f103a",
+              "description": [
+                {
+                  "_key": "34ade7dc6f05",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "41543417c5a9",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Host a meetup. We provide the slide deck, speaker coordination, and promotion. You bring your team and your city."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Host a meetup",
+              "heading": {
+                "_type": "heading",
+                "fontSize": "3XL",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Bring the agentic conversation to your team",
+                "type": "h2"
+              },
+              "image": {
+                "_sanityAsset": "image@file://./images/9ad6685c998b553f72676c02f3d67a77a499f094-1674x1050.webp",
+                "_type": "image"
+              },
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Host",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Find a Meetup",
+                "target": "_self",
+                "type": "external",
+                "variant": "secondary"
+              }
+            },
+            {
+              "_key": "0a5f25b251d3",
+              "description": [
+                {
+                  "_key": "ba3c7bd69eec",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "6eb51b25adf4",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Host a meetup. We provide the slide deck, speaker coordination, and promotion. You bring your team and your city."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Join a community group",
+              "heading": {
+                "_type": "heading",
+                "fontSize": "3XL",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Join a community group and start building",
+                "type": "h2"
+              },
+              "image": {
+                "_sanityAsset": "image@file://./images/978726fd68ae48503669e400d368e655d650c161-1674x1482.webp",
+                "_type": "image"
+              },
+              "list": [
+                {
+                  "_key": "e41bbe89f3db",
+                  "description": [
+                    {
+                      "_key": "16f8272b2a12",
+                      "_type": "block",
+                      "children": [
+                        {
+                          "_key": "a0e4746a71f5",
+                          "_type": "span",
+                          "marks": [],
+                          "text": "Are you deploying or evaluating Al agents and not sure who to trust?"
+                        }
+                      ],
+                      "markDefs": [],
+                      "style": "normal"
+                    }
+                  ],
+                  "icon": {
+                    "_sanityAsset": "image@file://./images/285cb704aea0e975acf2774cae2ec6f85a4c84d5-24x24.svg",
+                    "_type": "image"
+                  },
+                  "title": "Peer knowledge exchange"
+                },
+                {
+                  "_key": "640a7a35c2c5",
+                  "description": [
+                    {
+                      "_key": "a5fce598999d",
+                      "_type": "block",
+                      "children": [
+                        {
+                          "_key": "73cf388ef3ed",
+                          "_type": "span",
+                          "marks": [],
+                          "text": "Access working group outputs. Shape standards being written right now."
+                        }
+                      ],
+                      "markDefs": [],
+                      "style": "normal"
+                    }
+                  ],
+                  "icon": {
+                    "_sanityAsset": "image@file://./images/41520fdb12d8ce334963b9e54c4a1aad70fa11f4-24x24.svg",
+                    "_type": "image"
+                  },
+                  "title": "Join 4,000+ practitioners"
+                },
+                {
+                  "_key": "ba5f7e0be841",
+                  "description": [
+                    {
+                      "_key": "514618c5964b",
+                      "_type": "block",
+                      "children": [
+                        {
+                          "_key": "15b232dc9b17",
+                          "_type": "span",
+                          "marks": [],
+                          "text": "The fastest way to learn what works is from people doing it."
+                        }
+                      ],
+                      "markDefs": [],
+                      "style": "normal"
+                    }
+                  ],
+                  "icon": {
+                    "_sanityAsset": "image@file://./images/c483e4158da3da41888a44c3038b862eae38b728-24x24.svg",
+                    "_type": "image"
+                  },
+                  "title": "Community matters"
+                }
+              ],
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Join Now",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "secondary"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "d34b3dc5-3833-4e13-9d80-7e74d15c4790",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "projects",
+        "sort_order": 4,
+        "variant_key": "default",
+        "content": {
+          "name": "Projects"
+        }
+      },
+      {
+        "id": "c14ff665-caa5-44f7-bdd7-7606b8119d4b",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "findEvents",
+        "sort_order": 5,
+        "variant_key": "default",
+        "content": {
+          "name": "Find Events"
+        }
+      },
+      {
+        "id": "eba24591-c784-4e83-9bf4-0f6351d5afbc",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "mediaContentHub",
+        "sort_order": 6,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "thumbnail": {
+              "_sanityAsset": "image@file://./images/fd2554c03da7d0c91b1c89b2090f17da665c355a-1920x1098.webp",
+              "_type": "image"
+            },
+            "videoFile": {
+              "_sanityAsset": "file@file://./files/90f927259f7b3dd37c1977ee4333f9664d8ab6cd-mp4.bin",
+              "_type": "file"
+            },
+            "videoType": "file"
+          },
+          "description": [
+            {
+              "_key": "8a43397369c5",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ee53fc420541",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Hear from the passionate teams creating large-scale solutions, overcoming tough challenges, and sparking innovation across industries."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "From those building at Scale",
+          "heading": {
+            "_type": "heading",
+            "fontSize": "3XL",
+            "text": "Insights from the pioneers scaling new heights",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "4aebf5f762ba",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/interviews",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Interviews"
+            },
+            {
+              "_key": "c01df35b34e1",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/podcasts",
+                "label": "See More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Podcasts"
+            }
+          ]
+        }
+      },
+      {
+        "id": "34a24a21-3377-4880-aced-ebeb63dd4f23",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "writtenContentHub",
+        "sort_order": 7,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/b911d21d5bc4fdb4ce3ef31c2e2b9abfca92091b-4630x2919.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "37674d3d1775",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "c0e24cbc1770",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Signals from the people building agentic AI"
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Read what matters",
+          "heading": {
+            "_type": "heading",
+            "fontSize": "3XL",
+            "text": "Learn your way in",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "2a5bac9f8df2",
+              "blogItems": [
+                {
+                  "_key": "57eaf548695c",
+                  "_ref": "seed.blog.why-im-joining-the-agentic-ai-foundation",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "834d3042a7e7",
+                  "_ref": "seed.blog.why-evals-are-the-new-unit-tests",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "e8c8b7339d34",
+                  "_ref": "08OTm3KF4WwruT9hoQiBwm",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "63c20831f7f7",
+                  "_ref": "08OTm3KF4WwruT9hoQiBwm",
+                  "_type": "reference"
+                }
+              ],
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/blog",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Blog",
+              "type": "blog"
+            },
+            {
+              "_key": "9761dc31cbd4",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/events",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "eventItems": [
+                {
+                  "_key": "88b3bb3eb061",
+                  "_ref": "08OTm3KF4WwruT9hoRJb8X",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "d721c306977b",
+                  "_ref": "08OTm3KF4WwruT9hoRJm1U",
+                  "_type": "reference"
+                }
+              ],
+              "label": "Events",
+              "type": "event"
+            },
+            {
+              "_key": "3560821ebabe",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/podcasts",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Poscasts",
+              "podcastItems": [
+                {
+                  "_key": "ec212f114edc",
+                  "_ref": "ong4WQyEgbM2iPcKxHPC9p",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "929a69528aca",
+                  "_ref": "mG7POBA9Vgije5gJm7DOAM",
+                  "_type": "reference"
+                }
+              ],
+              "type": "podcast"
+            },
+            {
+              "_key": "feb7db84ab38",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/news",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Press & News",
+              "pressNewsItems": [
+                {
+                  "_key": "fd2e989488da",
+                  "_ref": "08OTm3KF4WwruT9hoRPmfb",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "ff9a7392df21",
+                  "_ref": "EZlAWg23CLpu3Xxwufmt4w",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "a23fc1923893",
+                  "_ref": "fJp1Uj2hwBX2VRBIWR9kIB",
+                  "_type": "reference"
+                }
+              ],
+              "type": "pressNews"
+            }
+          ]
+        }
+      },
+      {
+        "id": "6e3d78d9-2efb-4455-90d6-1f696b3b7558",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "tabsCTA",
+        "sort_order": 8,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/a222ab8e546d182ebc9f4d012ee32c4deb3e0231-4320x2994.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "17e27ac723ec",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "f39c26b7a376",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Get your organization listed on the AAIF Landscape to stand in front of enterprise buyers and investors. Submit an application today."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Startups",
+          "heading": {
+            "_type": "heading",
+            "fontSize": "3XL",
+            "text": "Get listed on the AAIF landscape",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "04cd7dd114ef",
+              "description": [
+                {
+                  "_key": "9723593792e5",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "2484a8bff26c",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Visibility with enterprise buyers and investors. Credibility from being part of the standards conversation. Access to working groups."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "The value",
+              "image": {
+                "_sanityAsset": "image@file://./images/713922efc376e667f0dfee3afaa4392771f1433b-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "Why List",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Submit an application",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Why get listed on AAIF",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "3fd355e32d3f",
+              "description": [
+                {
+                  "_key": "1c27c8012ef9",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "3963f35edc32",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Contribute to open decision-making, shape protocol direction, and ensure standards remain transparent, accountable, and built for everyone—not controlled by a few."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Benefits",
+              "image": {
+                "_sanityAsset": "image@file://./images/5ea98ee6d0ece00a5b5daae445d5acce027cb32b-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "What you get",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Submit an application",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Top benefits of listing with AAIF",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "5baa29b7a298",
+              "description": [
+                {
+                  "_key": "b8ca843ee929",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "956a60220fa6",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access open tools and shared standards to monitor, trace, and optimize system performance—so you can build with clarity, not guesswork."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Step-by-steps",
+              "image": {
+                "_sanityAsset": "image@file://./images/259bcc2ea2473cfe2794e31e329f7dfb3957212a-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "How to apply",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Submit an application",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Let's walk you through the process",
+                "type": "h2"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "35edcc48-ae2f-4aab-b7c1-d5c86f1312c8",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "tabsCTA",
+        "sort_order": 9,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/84673045a1006f4be5d2463e1bcd53f3b664d296-4320x2994.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "fa513cd88309",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ff44ce568cc3",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "These aren't committees. They're rooms where the people building agentic Al write the standards everyone will run on."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Where decisions happen",
+          "heading": {
+            "_type": "heading",
+            "fontSize": "3XL",
+            "text": "Working groups that matter",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "411d8c638f60",
+              "description": [
+                {
+                  "_key": "bae125bd9bda",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "779dda96c7b2",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Defining threat models, authentication, and trust frameworks for agentic systems. Current output: threat model spec."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Active now",
+              "image": {
+                "_sanityAsset": "image@file://./images/dc074d7d358129d00e8bdddea00374db7ba26eca-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "Security & Trust",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Explore memberships to join",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Security & Trust working group",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "bd4b92bff50f",
+              "description": [
+                {
+                  "_key": "ecd8eb91c7db",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "0498344f7660",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Contribute to open decision-making, shape protocol direction, and ensure standards remain transparent, accountable, and built for everyone—not controlled by a few."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Active now",
+              "image": {
+                "_sanityAsset": "image@file://./images/5b1b9134aa3d0dbe0687342567195524b84dffbd-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "MCP Governance",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Explore memberships to join",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Define how MCP ecosystem evolves",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "791a29abe649",
+              "description": [
+                {
+                  "_key": "37f56b3a4f95",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "5376b7e9c883",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access open tools and shared standards to monitor, trace, and optimize system performance—so you can build with clarity, not guesswork."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Active now",
+              "image": {
+                "_sanityAsset": "image@file://./images/882a6138c86ff89197701b674492dd8d890f4d3c-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "Observability",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Explore memberships to join",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "See what’s happening under the hood",
+                "type": "h2"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "ea8d7f4c-a9f5-455d-b43c-1703b9de372d",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "testimonial",
+        "sort_order": 10,
+        "variant_key": "default",
+        "content": {
+          "description": [
+            {
+              "_key": "2c8b2b64404d",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "618961594440",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Discover amazing stories about AAIF influence in the community and overall on the future"
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Testimonials",
+          "heading": {
+            "_type": "heading",
+            "fontSize": "3XL",
+            "text": "What people in the community say",
+            "type": "h2"
+          },
+          "testimonials": [
+            {
+              "_key": "3855321f79e5",
+              "author": "Jordan Park",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/5d2b163079bb223ff95442ad6548aedd985d16b2-144x144.webp",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "4183065674ae",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "9384fd771624",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"AAIF is the only organization that brings together the brightest minds in agentic AI to build a better future for all. I\\'m proud to be a member.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            },
+            {
+              "_key": "e227dd434bbb",
+              "author": "Alex Rivera",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/a6d412520c62dc886b2a46c68e91c5f8eb589750-200x200.jpg",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "5b0fc8091884",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "fd5f448e25ef",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"Open standards have always been the oxygen of the internet. AAIF is doing the same for agentic AI — and doing it in the open.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            },
+            {
+              "_key": "dd52df35ba6f",
+              "author": "Morgan Lee",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/5d2b163079bb223ff95442ad6548aedd985d16b2-144x144.webp",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "20795b3418e0",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "3ed5a983c6dd",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"Being part of the working groups here is the most signal-dense conversation I have all week. No fluff, just builders shipping.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            },
+            {
+              "_key": "79bdf79a779e",
+              "author": "Priya Desai",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/a7d693076ef333216820b683635ac0d15c3328ad-228x221.jpg",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "fe93b214bac4",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "3f8277a7148a",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"You can feel the governance and the engineering in the same room — that\\'s rare and that\\'s what makes AAIF work.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "88fce92b-fcf8-4483-a878-b0729a505f43",
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "block_def_key": "faq",
+        "sort_order": 11,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/42949d1a137ce2c8e6948c821a4972b651fcc3f2-1440x760.png",
+            "_type": "image"
+          },
+          "cta": {
+            "_type": "cta",
+            "external": "https://aaif.io/contact",
+            "label": "See all FAQs",
+            "type": "external",
+            "variant": "default"
+          },
+          "eyebrow": "Faq",
+          "faqs": [
+            {
+              "_key": "a3f09cdc06ec",
+              "answer": [
+                {
+                  "_key": "6f528707afae",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "0a59ee875025",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "AAIF is a community-driven platform for advancing agentic AI research, collaboration, and open-source development."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "What is AAIF for?"
+            },
+            {
+              "_key": "0d825c10b8da",
+              "answer": [
+                {
+                  "_key": "7a140902330b",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "407e1685076d",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "You can create projects directly from your dashboard after signing up. Each project gets its own workspace for collaboration."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "How can I create projects?"
+            },
+            {
+              "_key": "67379657e113",
+              "answer": [
+                {
+                  "_key": "b88fd2bf52ae",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "30db44b1cba1",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "AAIF is open to entrepreneurs seeking cutting-edge AI solutions, researchers exploring the frontiers of agentic AI, and developers eager to build the next generation of AI agents."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "How do I join AAIF?"
+            },
+            {
+              "_key": "cd6448a24d5c",
+              "answer": [
+                {
+                  "_key": "4294fdbcc4a6",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "9fa9bdf0dfd1",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Members get access to exclusive research, community events, project collaboration tools, and networking opportunities with leading AI practitioners."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "What benefits do members get?"
+            },
+            {
+              "_key": "27d20842f459",
+              "answer": [
+                {
+                  "_key": "0d47803e6d0e",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "cd772718d4df",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Yes, AAIF offers a free tier with access to core features. Premium tiers are available for advanced collaboration and enterprise needs."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "Is AAIF free?"
+            }
+          ],
+          "heading": {
+            "_type": "heading",
+            "fontSize": "3XL",
+            "text": "Your questions, our answers",
+            "type": "h2"
+          }
+        }
+      }
+    ],
+    "bricks": [],
+    "variants": [
+      {
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "field_path": "_pageOrder",
+        "match_context": {
+          "persona": "agentic-ai"
+        },
+        "value": [],
+        "priority": 100,
+        "persona_id": null
+      },
+      {
+        "page_id": "a26c5de0-4298-49a7-9cc0-61e72f11fc99",
+        "field_path": "_pageOrder",
+        "match_context": {
+          "persona": "enterprise-buyer"
+        },
+        "value": [
+          "3707de76-f995-40b4-a2d6-da23a19d1b53",
+          "f3238d3d-3f73-4f18-8dc5-c7fc511c77b4",
+          "45299eb0-7bb5-4dbc-95d2-9d80932431b2",
+          "8ce902f5-9435-4cdb-8562-0f33ea0bef25",
+          "d34b3dc5-3833-4e13-9d80-7e74d15c4790",
+          "34a24a21-3377-4880-aced-ebeb63dd4f23"
+        ],
+        "priority": 100,
+        "persona_id": null
+      }
+    ]
+  },
+  {
+    "id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+    "site_id": "ebc32e3d-e877-40ce-8083-2d4a4c29f9aa",
+    "slug": "test-home",
+    "full_path": "/test-home",
+    "title": "Test Home",
+    "composition_mode": "blocks",
+    "blocks": [
+      {
+        "id": "112ae2b3-0303-4a3b-9283-3aa0a38b6658",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "findYourWayIn",
+        "sort_order": 1,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/a27331832d6de367b98cf3241228b73b046a403c-3816x2145.webp",
+            "_type": "image"
+          },
+          "tabs": [
+            {
+              "_key": "7e405b55cd38",
+              "chip": "Developers",
+              "cta": {
+                "_type": "cta",
+                "external": "https://modelcontextprotocol.io",
+                "label": "Explore MCP",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "86885cb19c2f",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "12ab69ad4f1b",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access MCP specs, join the developer forum, and shape the protocols your code will run on. No gatekeeping. No politics."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/4f442d11d40837dfb70f1dcd1bb2a945bf7fe01e-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Developer",
+              "title": "Build with open standards"
+            },
+            {
+              "_key": "19e636a70172",
+              "chip": "Startupsxx",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "f94c02fef175",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "e974716a2a7d",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Move fast without rebuilding the wheel. Plug into open standards, collaborate with builders, and launch on foundations designed to scale with you. Build once—grow everywhere.sdfsdf"
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/74cd38b98a4e0ce861d3cd44f96fde27877833af-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Startupxx",
+              "title": "asdfsdfsdf"
+            },
+            {
+              "_key": "bf135bc2c337",
+              "chip": "Researchers",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "6a022152d091",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "dd449fc6b454",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access open specifications, collaborate across disciplines, and turn research into real-world standards that shape the future of AI."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/b4b0ada9ba21ce7b5371ef2eb4d17de1f353c779-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Researcher",
+              "title": "Explore, and contribute at the protocol level"
+            },
+            {
+              "_key": "0f2f2527024d",
+              "chip": "Policy Makers",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "description": [
+                {
+                  "_key": "f716237845b7",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "804d5326494e",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Understand how protocols evolve, contribute to responsible frameworks, and help shape an open, interoperable AI ecosystem."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "image": {
+                "_sanityAsset": "image@file://./images/bba74b6bb6768bdec45d8b5345f0f426db2607d3-2847x1518.webp",
+                "_type": "image"
+              },
+              "label": "Policy Maker",
+              "title": "Create transparent, community-driven standards."
+            }
+          ],
+          "tabsParentLabel": "I am a :"
+        }
+      },
+      {
+        "id": "429fb871-871a-4456-b3b0-8680c9ca623f",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "subscription",
+        "sort_order": 2,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/895c17d70a815dcbf687d9d5adabd3299a79a393-3816x1449.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "e07dd381457d",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "3fb0d0a04789",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Weekly signal on standards, governance, and the people building the future. No fluff. Just what matters."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "dialogBackgroundMedia": {
+            "_sanityAsset": "image@file://./images/32df995d89d9d5784c4349548632ff9e39b6f093-2514x840.webp",
+            "_type": "image"
+          },
+          "dialogEyebrow": "Subscribe to our singals",
+          "dialogHeading": "Stay connected to what is happening",
+          "eyebrow": "Subscribe",
+          "heading": {
+            "_type": "heading",
+            "fontSize": "XL",
+            "text": "Subscribe to the AAIF Briefing",
+            "type": "h4"
+          },
+          "primaryCTA": {
+            "_type": "cta",
+            "label": "Subscribe",
+            "type": "internal",
+            "variant": "default"
+          },
+          "secondaryCTA": {
+            "_type": "cta",
+            "external": "https://aaif.io/subscribe",
+            "label": "About AAIF",
+            "type": "external",
+            "variant": "secondary"
+          }
+        }
+      },
+      {
+        "id": "a5f13ea2-0bf1-4b4d-946a-fa259bd960cd",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "meetup",
+        "sort_order": 3,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/2ec5e288e4f20b2d28934ae78eff1da3795ef613-4320x3792.webp",
+            "_type": "image"
+          },
+          "meetupRows": [
+            {
+              "_key": "58b7191f103a",
+              "description": [
+                {
+                  "_key": "34ade7dc6f05",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "41543417c5a9",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Host a meetup. We provide the slide deck, speaker coordination, and promotion. You bring your team and your city."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Subscribe",
+              "heading": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Bring the agentic conversation to your team",
+                "type": "h2"
+              },
+              "image": {
+                "_sanityAsset": "image@file://./images/9ad6685c998b553f72676c02f3d67a77a499f094-1674x1050.webp",
+                "_type": "image"
+              },
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Host",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Find a Meetup",
+                "target": "_self",
+                "type": "external",
+                "variant": "secondary"
+              }
+            },
+            {
+              "_key": "0a5f25b251d3",
+              "description": [
+                {
+                  "_key": "ba3c7bd69eec",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "6eb51b25adf4",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Host a meetup. We provide the slide deck, speaker coordination, and promotion. You bring your team and your city."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Join a community group",
+              "heading": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Join a community group and start building",
+                "type": "h2"
+              },
+              "image": {
+                "_sanityAsset": "image@file://./images/978726fd68ae48503669e400d368e655d650c161-1674x1482.webp",
+                "_type": "image"
+              },
+              "list": [
+                {
+                  "_key": "e41bbe89f3db",
+                  "description": [
+                    {
+                      "_key": "16f8272b2a12",
+                      "_type": "block",
+                      "children": [
+                        {
+                          "_key": "a0e4746a71f5",
+                          "_type": "span",
+                          "marks": [],
+                          "text": "Are you deploying or evaluating Al agents and not sure who to trust?"
+                        }
+                      ],
+                      "markDefs": [],
+                      "style": "normal"
+                    }
+                  ],
+                  "icon": {
+                    "_sanityAsset": "image@file://./images/285cb704aea0e975acf2774cae2ec6f85a4c84d5-24x24.svg",
+                    "_type": "image"
+                  },
+                  "title": "Peer knowledge exchange"
+                },
+                {
+                  "_key": "640a7a35c2c5",
+                  "description": [
+                    {
+                      "_key": "a5fce598999d",
+                      "_type": "block",
+                      "children": [
+                        {
+                          "_key": "73cf388ef3ed",
+                          "_type": "span",
+                          "marks": [],
+                          "text": "Access working group outputs. Shape standards being written right now."
+                        }
+                      ],
+                      "markDefs": [],
+                      "style": "normal"
+                    }
+                  ],
+                  "icon": {
+                    "_sanityAsset": "image@file://./images/41520fdb12d8ce334963b9e54c4a1aad70fa11f4-24x24.svg",
+                    "_type": "image"
+                  },
+                  "title": "Join 4,000+ practitioners"
+                },
+                {
+                  "_key": "ba5f7e0be841",
+                  "description": [
+                    {
+                      "_key": "514618c5964b",
+                      "_type": "block",
+                      "children": [
+                        {
+                          "_key": "15b232dc9b17",
+                          "_type": "span",
+                          "marks": [],
+                          "text": "The fastest way to "
+                        },
+                        {
+                          "_key": "440824cba0ce",
+                          "_type": "span",
+                          "marks": [
+                            "code"
+                          ],
+                          "text": "learn"
+                        },
+                        {
+                          "_key": "cc379ed3c15d",
+                          "_type": "span",
+                          "marks": [],
+                          "text": " "
+                        },
+                        {
+                          "_key": "14789fff37e3",
+                          "_type": "span",
+                          "marks": [
+                            "em"
+                          ],
+                          "text": "what"
+                        },
+                        {
+                          "_key": "f16203b06aa2",
+                          "_type": "span",
+                          "marks": [],
+                          "text": " "
+                        },
+                        {
+                          "_key": "03c5c55b7a95",
+                          "_type": "span",
+                          "marks": [
+                            "strong"
+                          ],
+                          "text": "works"
+                        },
+                        {
+                          "_key": "1ff2aacea64f",
+                          "_type": "span",
+                          "marks": [],
+                          "text": " is from people doing it."
+                        }
+                      ],
+                      "markDefs": [],
+                      "style": "normal"
+                    }
+                  ],
+                  "icon": {
+                    "_sanityAsset": "image@file://./images/4d4e94e8cac44e75612642c5cffc426ea07d26a3-32x32.svg",
+                    "_type": "image"
+                  },
+                  "title": "Community matters"
+                }
+              ],
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Join Now",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/subscribe",
+                "label": "Learn More",
+                "target": "_self",
+                "type": "external",
+                "variant": "secondary"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "ea449fdb-bf2e-4a18-817a-d2ed4b300519",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "projects",
+        "sort_order": 4,
+        "variant_key": "default",
+        "content": {
+          "name": "Projects"
+        }
+      },
+      {
+        "id": "2ffb5913-2dfd-494d-a362-83662984b2bb",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "findEvents",
+        "sort_order": 5,
+        "variant_key": "default",
+        "content": {
+          "name": "Find Events"
+        }
+      },
+      {
+        "id": "340efe5b-2d94-4642-8f6e-d623be415cfb",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "mediaContentHub",
+        "sort_order": 6,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "thumbnail": {
+              "_sanityAsset": "image@file://./images/fd2554c03da7d0c91b1c89b2090f17da665c355a-1920x1098.webp",
+              "_type": "image"
+            },
+            "videoFile": {
+              "_sanityAsset": "file@file://./files/90f927259f7b3dd37c1977ee4333f9664d8ab6cd-mp4.bin",
+              "_type": "file"
+            },
+            "videoType": "file"
+          },
+          "description": [
+            {
+              "_key": "8a43397369c5",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ee53fc420541",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Hear from the passionate teams creating large-scale solutions, overcoming tough challenges, and sparking innovation across industries."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "From those building at Scale",
+          "heading": {
+            "_type": "heading",
+            "text": "Insights from the pioneers scaling new heights",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "4aebf5f762ba",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/interviews",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Interviews"
+            },
+            {
+              "_key": "c01df35b34e1",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/podcasts",
+                "label": "See More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Podcasts"
+            }
+          ]
+        }
+      },
+      {
+        "id": "0d8ec82d-8ca3-4646-b5a4-622945c9857d",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "writtenContentHub",
+        "sort_order": 7,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/b911d21d5bc4fdb4ce3ef31c2e2b9abfca92091b-4630x2919.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "37674d3d1775",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "c0e24cbc1770",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Signals from the people building agentic AI"
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Read what matters",
+          "heading": {
+            "_type": "heading",
+            "text": "Learn your way in",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "2a5bac9f8df2",
+              "blogItems": [
+                {
+                  "_key": "57eaf548695c",
+                  "_ref": "seed.blog.why-im-joining-the-agentic-ai-foundation",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "834d3042a7e7",
+                  "_ref": "seed.blog.why-evals-are-the-new-unit-tests",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "e8c8b7339d34",
+                  "_ref": "08OTm3KF4WwruT9hoQiBwm",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "63c20831f7f7",
+                  "_ref": "08OTm3KF4WwruT9hoQiBwm",
+                  "_type": "reference"
+                }
+              ],
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/blog",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Blog",
+              "type": "blog"
+            },
+            {
+              "_key": "9761dc31cbd4",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/events",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "eventItems": [
+                {
+                  "_key": "88b3bb3eb061",
+                  "_ref": "08OTm3KF4WwruT9hoRJb8X",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "d721c306977b",
+                  "_ref": "08OTm3KF4WwruT9hoRJm1U",
+                  "_type": "reference"
+                }
+              ],
+              "label": "Events",
+              "type": "event"
+            },
+            {
+              "_key": "3560821ebabe",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/podcasts",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Poscasts",
+              "podcastItems": [
+                {
+                  "_key": "ec212f114edc",
+                  "_ref": "ong4WQyEgbM2iPcKxHPC9p",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "929a69528aca",
+                  "_ref": "mG7POBA9Vgije5gJm7DOAM",
+                  "_type": "reference"
+                }
+              ],
+              "type": "podcast"
+            },
+            {
+              "_key": "feb7db84ab38",
+              "cta": {
+                "_type": "cta",
+                "external": "https://aaif.io/news",
+                "label": "Explore More",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "label": "Press & News",
+              "pressNewsItems": [
+                {
+                  "_key": "fd2e989488da",
+                  "_ref": "08OTm3KF4WwruT9hoRPmfb",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "ff9a7392df21",
+                  "_ref": "EZlAWg23CLpu3Xxwufmt4w",
+                  "_type": "reference"
+                },
+                {
+                  "_key": "a23fc1923893",
+                  "_ref": "fJp1Uj2hwBX2VRBIWR9kIB",
+                  "_type": "reference"
+                }
+              ],
+              "type": "pressNews"
+            }
+          ]
+        }
+      },
+      {
+        "id": "8a0f69eb-5d51-4e21-afcd-ae386f40e63b",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "tabsCTA",
+        "sort_order": 8,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/a222ab8e546d182ebc9f4d012ee32c4deb3e0231-4320x2994.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "17e27ac723ec",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "f39c26b7a376",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Get your organization listed on the AAIF Landscape to stand in front of enterprise buyers and investors. Submit an application today."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Startups",
+          "heading": {
+            "_type": "heading",
+            "text": "Get listed on the AAIF landscape",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "04cd7dd114ef",
+              "description": [
+                {
+                  "_key": "9723593792e5",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "2484a8bff26c",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Visibility with enterprise buyers and investors. Credibility from being part of the standards conversation. Access to working groups."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "The value",
+              "image": {
+                "_sanityAsset": "image@file://./images/713922efc376e667f0dfee3afaa4392771f1433b-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "Why List",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Submit an application",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Why get listed on AAIF",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "3fd355e32d3f",
+              "description": [
+                {
+                  "_key": "1c27c8012ef9",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "3963f35edc32",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Contribute to open decision-making, shape protocol direction, and ensure standards remain transparent, accountable, and built for everyone—not controlled by a few."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Benefits",
+              "image": {
+                "_sanityAsset": "image@file://./images/5ea98ee6d0ece00a5b5daae445d5acce027cb32b-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "What you get",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Submit an application",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Top benefits of listing with AAIF",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "5baa29b7a298",
+              "description": [
+                {
+                  "_key": "b8ca843ee929",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "956a60220fa6",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access open tools and shared standards to monitor, trace, and optimize system performance—so you can build with clarity, not guesswork."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Step-by-steps",
+              "image": {
+                "_sanityAsset": "image@file://./images/259bcc2ea2473cfe2794e31e329f7dfb3957212a-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "How to apply",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Submit an application",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Let's walk you through the process",
+                "type": "h2"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "92aaf81a-7038-4bf2-8ea8-bac7d7797abf",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "tabsCTA",
+        "sort_order": 9,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/84673045a1006f4be5d2463e1bcd53f3b664d296-4320x2994.webp",
+            "_type": "image"
+          },
+          "description": [
+            {
+              "_key": "fa513cd88309",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ff44ce568cc3",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "These aren't committees. They're rooms where the people building agentic Al write the standards everyone will run on."
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Where decisions happen",
+          "heading": {
+            "_type": "heading",
+            "text": "Working groups that matter",
+            "type": "h2"
+          },
+          "tabs": [
+            {
+              "_key": "411d8c638f60",
+              "description": [
+                {
+                  "_key": "bae125bd9bda",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "779dda96c7b2",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Defining threat models, authentication, and trust frameworks for agentic systems. Current output: threat model spec."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Active now",
+              "image": {
+                "_sanityAsset": "image@file://./images/dc074d7d358129d00e8bdddea00374db7ba26eca-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "Security & Trust",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Explore memberships to join",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Security & Trust working group",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "bd4b92bff50f",
+              "description": [
+                {
+                  "_key": "ecd8eb91c7db",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "0498344f7660",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Contribute to open decision-making, shape protocol direction, and ensure standards remain transparent, accountable, and built for everyone—not controlled by a few."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Active now",
+              "image": {
+                "_sanityAsset": "image@file://./images/5b1b9134aa3d0dbe0687342567195524b84dffbd-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "MCP Governance",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Explore memberships to join",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "Define how MCP ecosystem evolves",
+                "type": "h2"
+              }
+            },
+            {
+              "_key": "791a29abe649",
+              "description": [
+                {
+                  "_key": "37f56b3a4f95",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "5376b7e9c883",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Access open tools and shared standards to monitor, trace, and optimize system performance—so you can build with clarity, not guesswork."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "eyebrow": "Active now",
+              "image": {
+                "_sanityAsset": "image@file://./images/882a6138c86ff89197701b674492dd8d890f4d3c-1776x1176.webp",
+                "_type": "image"
+              },
+              "label": "Observability",
+              "primaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Explore memberships to join",
+                "target": "_self",
+                "type": "external",
+                "variant": "default"
+              },
+              "secondaryCTA": {
+                "_type": "cta",
+                "external": "https://aaif.io/contact",
+                "label": "Learn more",
+                "target": "_self",
+                "type": "external",
+                "variant": "text"
+              },
+              "title": {
+                "_type": "heading",
+                "hidden": false,
+                "hideOnDesktop": false,
+                "hideOnMobile": false,
+                "text": "See what’s happening under the hood",
+                "type": "h2"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "e3d1c688-210e-41bf-87aa-614e5ce2ebc1",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "testimonial",
+        "sort_order": 10,
+        "variant_key": "default",
+        "content": {
+          "description": [
+            {
+              "_key": "2c8b2b64404d",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "618961594440",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Discover amazing stories about AAIF influence in the community and overall on the future"
+                }
+              ],
+              "markDefs": [],
+              "style": "normal"
+            }
+          ],
+          "eyebrow": "Testimonials",
+          "heading": {
+            "_type": "heading",
+            "text": "What people in the community say",
+            "type": "h2"
+          },
+          "testimonials": [
+            {
+              "_key": "3855321f79e5",
+              "author": "Jordan Park",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/5d2b163079bb223ff95442ad6548aedd985d16b2-144x144.webp",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "4183065674ae",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "9384fd771624",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"AAIF is the only organization that brings together the brightest minds in agentic AI to build a better future for all. I\\'m proud to be a member.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            },
+            {
+              "_key": "e227dd434bbb",
+              "author": "Alex Rivera",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/a6d412520c62dc886b2a46c68e91c5f8eb589750-200x200.jpg",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "5b0fc8091884",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "fd5f448e25ef",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"Open standards have always been the oxygen of the internet. AAIF is doing the same for agentic AI — and doing it in the open.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            },
+            {
+              "_key": "dd52df35ba6f",
+              "author": "Morgan Lee",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/5d2b163079bb223ff95442ad6548aedd985d16b2-144x144.webp",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "20795b3418e0",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "3ed5a983c6dd",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"Being part of the working groups here is the most signal-dense conversation I have all week. No fluff, just builders shipping.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            },
+            {
+              "_key": "79bdf79a779e",
+              "author": "Priya Desai",
+              "avatar": {
+                "_sanityAsset": "image@file://./images/a7d693076ef333216820b683635ac0d15c3328ad-228x221.jpg",
+                "_type": "image"
+              },
+              "quote": [
+                {
+                  "_key": "fe93b214bac4",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "3f8277a7148a",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "\"You can feel the governance and the engineering in the same room — that\\'s rare and that\\'s what makes AAIF work.\""
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "838fa2c8-97cc-4dfc-8598-7a53888b772b",
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "block_def_key": "faq",
+        "sort_order": 11,
+        "variant_key": "default",
+        "content": {
+          "backgroundMedia": {
+            "_sanityAsset": "image@file://./images/42949d1a137ce2c8e6948c821a4972b651fcc3f2-1440x760.png",
+            "_type": "image"
+          },
+          "cta": {
+            "_type": "cta",
+            "external": "https://aaif.io/contact",
+            "label": "See all FAQs",
+            "type": "external",
+            "variant": "default"
+          },
+          "eyebrow": "Faq",
+          "faqs": [
+            {
+              "_key": "a3f09cdc06ec",
+              "answer": [
+                {
+                  "_key": "6f528707afae",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "0a59ee875025",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "AAIF is a community-driven platform for advancing agentic AI research, collaboration, and open-source development."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "What is AAIF for?"
+            },
+            {
+              "_key": "0d825c10b8da",
+              "answer": [
+                {
+                  "_key": "7a140902330b",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "407e1685076d",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "You can create projects directly from your dashboard after signing up. Each project gets its own workspace for collaboration."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "How can I create projects?"
+            },
+            {
+              "_key": "67379657e113",
+              "answer": [
+                {
+                  "_key": "b88fd2bf52ae",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "30db44b1cba1",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "AAIF is open to entrepreneurs seeking cutting-edge AI solutions, researchers exploring the frontiers of agentic AI, and developers eager to build the next generation of AI agents."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "How do I join AAIF?"
+            },
+            {
+              "_key": "cd6448a24d5c",
+              "answer": [
+                {
+                  "_key": "4294fdbcc4a6",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "9fa9bdf0dfd1",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Members get access to exclusive research, community events, project collaboration tools, and networking opportunities with leading AI practitioners."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "What benefits do members get?"
+            },
+            {
+              "_key": "27d20842f459",
+              "answer": [
+                {
+                  "_key": "0d47803e6d0e",
+                  "_type": "block",
+                  "children": [
+                    {
+                      "_key": "cd772718d4df",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "Yes, AAIF offers a free tier with access to core features. Premium tiers are available for advanced collaboration and enterprise needs."
+                    }
+                  ],
+                  "markDefs": [],
+                  "style": "normal"
+                }
+              ],
+              "question": "Is AAIF free?"
+            }
+          ],
+          "heading": {
+            "_type": "heading",
+            "text": "Your questions, our answers",
+            "type": "h2"
+          }
+        }
+      }
+    ],
+    "bricks": [],
+    "variants": [
+      {
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "field_path": "_pageOrder",
+        "match_context": {
+          "persona": "agentic-ai"
+        },
+        "value": [],
+        "priority": 100,
+        "persona_id": null
+      },
+      {
+        "page_id": "1d8efe2d-ec22-4241-a189-77be135b728a",
+        "field_path": "_pageOrder",
+        "match_context": {
+          "persona": "enterprise-buyer"
+        },
+        "value": [
+          "112ae2b3-0303-4a3b-9283-3aa0a38b6658",
+          "c993b6f4-425d-4863-9dca-0e4953e6628e",
+          "429fb871-871a-4456-b3b0-8680c9ca623f",
+          "a5f13ea2-0bf1-4b4d-946a-fa259bd960cd",
+          "ea449fdb-bf2e-4a18-817a-d2ed4b300519",
+          "0d8ec82d-8ca3-4646-b5a4-622945c9857d"
+        ],
+        "priority": 100,
+        "persona_id": null
+      }
+    ]
+  }
+]
