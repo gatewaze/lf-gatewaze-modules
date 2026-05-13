@@ -1,0 +1,10 @@
+{
+  "id": "projects",
+  "name": "Projects",
+  "description": "Portfolio of open-source / standards projects for AAIF-style sites — drives the home page ProjectsSection.",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "group": "content",
+  "type": "feature",
+  "visibility": "public"
+}

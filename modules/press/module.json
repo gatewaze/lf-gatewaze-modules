@@ -1,0 +1,10 @@
+{
+  "id": "press",
+  "name": "Press",
+  "description": "Press releases and external press coverage rendered by the home-page WrittenContentHub 'Press & News' tab.",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "group": "content",
+  "type": "feature",
+  "visibility": "public"
+}
