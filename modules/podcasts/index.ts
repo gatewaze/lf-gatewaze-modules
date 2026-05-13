@@ -2,6 +2,7 @@ import type { GatewazeModule, ModuleContext } from '@gatewaze/shared';
 
 const podcastsModule: GatewazeModule = {
   id: 'podcasts',
+  group: 'content',
   type: 'feature',
   visibility: 'public',
   name: 'Podcasts',
@@ -24,8 +25,14 @@ const podcastsModule: GatewazeModule = {
   ],
 
   apiRoutes: async (app: unknown, context?: ModuleContext) => {
+    // Legacy admin/portal handlers (podcast detail by slug + guest-apply
+    // form) live in api.ts.
     const { registerRoutes } = await import('./api');
     registerRoutes(app as any, context);
+
+    // Public read endpoints (/api/podcasts/episodes) for theme consumption.
+    const { registerPublicRoutes } = await import('./api/register-routes.js');
+    registerPublicRoutes(app as any);
   },
 
   adminRoutes: [
