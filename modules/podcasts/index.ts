@@ -22,6 +22,7 @@ const podcastsModule: GatewazeModule = {
     'migrations/003_triage_adapter.sql',
     'migrations/004_keyword_adapter.sql',
     'migrations/005_register_with_platform.sql',
+    'migrations/006_webhook_topic.sql',
   ],
 
   apiRoutes: async (app: unknown, context?: ModuleContext) => {

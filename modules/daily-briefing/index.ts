@@ -16,6 +16,7 @@ const dailyBriefingModule: GatewazeModule = {
 
   migrations: [
     'migrations/001_daily_briefing_init.sql',
+    'migrations/002_webhook_topic.sql',
   ],
 
   apiRoutes: async (app: unknown) => {
@@ -37,7 +38,11 @@ const dailyBriefingModule: GatewazeModule = {
     {
       path: '/daily-briefing',
       label: 'Daily Briefing',
-      icon: 'NewspaperClipping',
+      // navigationIcons resolves short Heroicon names; `NewspaperClipping`
+      // is a Phosphor icon and didn't render. `Rss` is a Heroicon, fits
+      // the "feed of briefings" mental model, and differs from press
+      // (`Newspaper`) so the two sidebar entries are distinguishable.
+      icon: 'Rss',
       requiredFeature: 'daily-briefing',
       order: 20,
     },
