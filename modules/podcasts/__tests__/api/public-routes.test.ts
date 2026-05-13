@@ -136,6 +136,9 @@ describe('podcasts public routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ episodes: rows, limit: 20, offset: 0 });
       expect(res.headers['cache-control']).toContain('max-age=60');
+      expect(res.headers['cache-control']).toContain('stale-if-error=86400');
+      expect(res.headers['surrogate-key']).toBe('podcasts');
+      expect(res.headers['etag']).toMatch(/^W\/"[0-9a-f]{16}"$/);
 
       // Confirm the query was filtered to status='published' and ordered
       // by publish_date desc.
@@ -228,6 +231,8 @@ describe('podcasts public routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual(row);
       expect(res.headers['cache-control']).toContain('max-age=60');
+      expect(res.headers['surrogate-key']).toBe('podcasts podcasts:episode-1');
+      expect(res.headers['etag']).toMatch(/^W\/"[0-9a-f]{16}"$/);
 
       // The detail select must include `show_notes` (uses DETAIL_COLUMNS).
       const selectOp = supabase.calls[0].ops.find((o) => o.op === 'select');
@@ -260,6 +265,27 @@ describe('podcasts public routes', () => {
       const res = await request(app).get('/api/podcasts/episodes/episode-1');
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('internal');
+    });
+
+    it('returns 304 when If-None-Match matches the computed ETag', async () => {
+      const row = {
+        id: 'e1',
+        slug: 'episode-1',
+        title: 'Episode 1',
+        show_notes: '## notes',
+      };
+      supabase.mockSingleResult(row);
+      const first = await request(app).get('/api/podcasts/episodes/episode-1');
+      expect(first.status).toBe(200);
+      const etag = first.headers['etag'];
+      expect(etag).toBeDefined();
+
+      supabase.mockSingleResult(row);
+      const second = await request(app)
+        .get('/api/podcasts/episodes/episode-1')
+        .set('If-None-Match', etag);
+      expect(second.status).toBe(304);
+      expect(second.text).toBe('');
     });
   });
 });

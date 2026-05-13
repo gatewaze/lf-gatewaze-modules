@@ -22,6 +22,8 @@
  * Sort order: is_pinned DESC, brief_date DESC, created_at DESC.
  */
 
+import { createHash } from 'node:crypto';
+
 import type { Request, Response, Router } from 'express';
 
 interface ErrorEnvelope {
@@ -31,7 +33,7 @@ interface ErrorEnvelope {
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
-const CACHE_HEADER = 'public, max-age=60, s-maxage=300';
+const CACHE_HEADER = 'public, max-age=60, s-maxage=300, stale-if-error=86400';
 
 const LIST_COLUMNS = [
   'id',
@@ -123,12 +125,16 @@ export function createPublicDailyBriefingRoutes(deps: PublicDailyBriefingRoutesD
       return;
     }
 
-    res.setHeader('Cache-Control', CACHE_HEADER);
-    res.status(200).json({
-      items: (result.data ?? []) as unknown[],
-      limit,
-      offset,
-    });
+    sendCacheable(
+      req,
+      res,
+      {
+        items: (result.data ?? []) as unknown[],
+        limit,
+        offset,
+      },
+      ['daily-briefing'],
+    );
   }
 
   async function getItem(req: Request, res: Response): Promise<void> {
@@ -166,8 +172,7 @@ export function createPublicDailyBriefingRoutes(deps: PublicDailyBriefingRoutesD
       return;
     }
 
-    res.setHeader('Cache-Control', CACHE_HEADER);
-    res.status(200).json(result.data);
+    sendCacheable(req, res, result.data, ['daily-briefing', `daily-briefing:${id}`]);
   }
 
   return { listItems, getItem };
@@ -183,4 +188,34 @@ export function mountPublicDailyBriefingRoutes(
 
 function sendError(res: Response, status: number, error: string, message: string): void {
   res.status(status).json({ error, message } satisfies ErrorEnvelope);
+}
+
+/**
+ * Emit a cacheable response with the headers the Layer-3 CDN expects:
+ *
+ *   Cache-Control:  public, max-age=60, s-maxage=300, stale-if-error=86400
+ *   Surrogate-Key:  <topic> [<topic>:<id-or-slug> ...]
+ *   ETag:           W/"<sha256(body)[0:16]>"
+ *
+ * Spec: §5.4 of spec-api-cache-and-revalidation.md.
+ *
+ * If the client's `If-None-Match` matches the computed ETag we return
+ * 304 with no body (origin bandwidth save inside the max-age window).
+ */
+function sendCacheable(
+  req: Request,
+  res: Response,
+  body: unknown,
+  surrogateKeys: string[],
+): void {
+  const json = JSON.stringify(body);
+  const etag = `W/"${createHash('sha256').update(json).digest('hex').slice(0, 16)}"`;
+  res.setHeader('Cache-Control', CACHE_HEADER);
+  res.setHeader('Surrogate-Key', surrogateKeys.join(' '));
+  res.setHeader('ETag', etag);
+  if (req.headers['if-none-match'] === etag) {
+    res.status(304).end();
+    return;
+  }
+  res.status(200).type('application/json').send(json);
 }

@@ -128,6 +128,9 @@ describe('daily-briefing public routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ items: rows, limit: 20, offset: 0 });
       expect(res.headers['cache-control']).toContain('max-age=60');
+      expect(res.headers['cache-control']).toContain('stale-if-error=86400');
+      expect(res.headers['surrogate-key']).toBe('daily-briefing');
+      expect(res.headers['etag']).toMatch(/^W\/"[0-9a-f]{16}"$/);
 
       const state = supabase.calls[0];
       expect(state.table).toBe('daily_briefing_items');
@@ -218,6 +221,10 @@ describe('daily-briefing public routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual(row);
       expect(res.headers['cache-control']).toContain('max-age=60');
+      expect(res.headers['surrogate-key']).toBe(
+        `daily-briefing daily-briefing:${SAMPLE_UUID}`,
+      );
+      expect(res.headers['etag']).toMatch(/^W\/"[0-9a-f]{16}"$/);
 
       const eqOps = supabase.calls[0].ops.filter((o) => o.op === 'eq');
       expect(eqOps).toContainEqual({ op: 'eq', args: ['id', SAMPLE_UUID] });
@@ -242,6 +249,30 @@ describe('daily-briefing public routes', () => {
       const res = await request(app).get(`/api/daily-briefing/${SAMPLE_UUID}`);
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('internal');
+    });
+
+    it('returns 304 when If-None-Match matches the computed ETag', async () => {
+      const row = {
+        id: SAMPLE_UUID,
+        title: 'Hello',
+        summary: 'World',
+        brief_date: '2026-04-24',
+        source_label: 'X',
+        source_href: 'https://x.com',
+        is_pinned: false,
+      };
+      supabase.mockSingleResult(row);
+      const first = await request(app).get(`/api/daily-briefing/${SAMPLE_UUID}`);
+      expect(first.status).toBe(200);
+      const etag = first.headers['etag'];
+      expect(etag).toBeDefined();
+
+      supabase.mockSingleResult(row);
+      const second = await request(app)
+        .get(`/api/daily-briefing/${SAMPLE_UUID}`)
+        .set('If-None-Match', etag);
+      expect(second.status).toBe(304);
+      expect(second.text).toBe('');
     });
   });
 });
