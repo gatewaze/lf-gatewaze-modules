@@ -1,0 +1,10 @@
+{
+  "id": "daily-briefing",
+  "name": "Daily Briefing",
+  "description": "Short-form daily AI news items rendered by the AAIF home-page Hero sidebar (Daily Agentic AI LinkedIn Newsletter).",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "group": "content",
+  "type": "feature",
+  "visibility": "public"
+}
