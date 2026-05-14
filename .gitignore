@@ -3,3 +3,4 @@ dist/
 *.tsbuildinfo
 .DS_Store
 modules/aaif-import/seed/apply-seed.log.json
+modules/projects/node_modules
