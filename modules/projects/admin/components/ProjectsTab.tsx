@@ -13,7 +13,7 @@ import { PencilIcon, TrashIcon, PlusIcon, EyeIcon, EyeSlashIcon } from '@heroico
 import { toast } from 'sonner';
 
 import { Button, Modal, Badge } from '@/components/ui';
-import { ConfirmModal } from '@/components/shared/ConfirmModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 import {
@@ -466,7 +466,7 @@ export default function ProjectsTab() {
       )}
 
       <ConfirmModal
-        show={Boolean(deletingProject)}
+        isOpen={Boolean(deletingProject)}
         onClose={() => setDeletingProject(null)}
         onConfirm={handleDelete}
         title="Delete project"
@@ -476,7 +476,7 @@ export default function ProjectsTab() {
             : ''
         }
         confirmText="Delete"
-        confirmVariant="danger"
+        confirmColor="red"
       />
     </div>
   );

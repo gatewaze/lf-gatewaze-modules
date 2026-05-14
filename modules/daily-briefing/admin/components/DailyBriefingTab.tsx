@@ -18,7 +18,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button, Modal, Badge } from '@/components/ui';
-import { ConfirmModal } from '@/components/shared/ConfirmModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 import {
@@ -366,7 +366,7 @@ export default function DailyBriefingTab() {
             : ''
         }
         confirmText="Delete"
-        confirmVariant="danger"
+        confirmColor="red"
       />
     </div>
   );
