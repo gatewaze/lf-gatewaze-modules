@@ -1,8 +1,9 @@
 /**
  * Gemini image generation for daily-briefing day covers.
  *
- * Calls Google's `gemini-2.5-flash-image-preview` (the model commonly
- * referred to as "nano banana") with the AAIF-branded newspaper-comic
+ * Calls Google's `gemini-2.5-flash-image` (the model commonly
+ * referred to as "nano banana", now GA — the `-preview` suffix was
+ * dropped when the model graduated) with the AAIF-branded newspaper-comic
  * prompt template, then uploads the resulting PNG to the host-media
  * Supabase Storage bucket. Returns the storage path + public CDN URL +
  * the exact prompt that was used (stored on the day row for audit).
@@ -19,7 +20,7 @@
 import { buildDailyBriefingImagePrompt } from './gemini-prompt.js';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'gemini-2.5-flash-image-preview';
+const GEMINI_MODEL = 'gemini-2.5-flash-image';
 
 // Supabase Storage bucket — must match HOST_MEDIA_BUCKET on the platform
 // side. Fallback to 'media' matches host-media's own default.
@@ -33,7 +34,6 @@ export interface DailyBriefingStory {
 
 export interface GeneratedImage {
   storage_path: string;
-  cdn_url: string;
   prompt: string;
 }
 
@@ -48,7 +48,6 @@ export interface GenerateDayImageDeps {
   apiKey: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
-  publicSupabaseUrl: string;
   fetchImpl?: typeof fetch;
   /** Used by tests to make the filename deterministic. */
   now?: () => Date;
@@ -75,6 +74,7 @@ export function makeDayImageGenerator(deps: GenerateDayImageDeps) {
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         responseModalities: ['IMAGE'],
+        imageConfig: { aspectRatio: '16:9' },
       },
     };
     const response = await fetchImpl(url, {
@@ -122,8 +122,7 @@ export function makeDayImageGenerator(deps: GenerateDayImageDeps) {
       throw new Error(`storage upload failed: ${error.message}`);
     }
 
-    const cdnUrl = `${deps.publicSupabaseUrl}/storage/v1/object/public/${STORAGE_BUCKET}/${storagePath}`;
-    return { storage_path: storagePath, cdn_url: cdnUrl, prompt };
+    return { storage_path: storagePath, prompt };
   };
 }
 

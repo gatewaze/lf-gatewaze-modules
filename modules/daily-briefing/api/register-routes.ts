@@ -72,15 +72,13 @@ export function registerRoutes(app: Express): void {
   // Image-gen dependency. Optional — if GEMINI_API_KEY isn't set we
   // pass `undefined` through and the admin endpoint returns 503 with a
   // useful message rather than 500 on first invoke.
+  //
+  // We store only the relative storage_path on the row — consumers
+  // resolve to a full URL at read time via toPublicUrl(path, bucketUrl),
+  // matching the events / host-media pattern (see spec-relative-storage-paths.md).
   const geminiApiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? '';
-  const publicSupabaseUrl =
-    process.env.PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
   const generateDayImage = geminiApiKey
-    ? makeDayImageGenerator({
-        apiKey: geminiApiKey,
-        supabase,
-        publicSupabaseUrl,
-      })
+    ? makeDayImageGenerator({ apiKey: geminiApiKey, supabase })
     : undefined;
   if (!geminiApiKey) {
     logger.warn(

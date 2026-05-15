@@ -107,7 +107,7 @@ export interface AdminDailyBriefingRoutesDeps {
     siteId: string;
     briefDate: string;
     stories: Array<{ title: string; summary: string; source_label: string }>;
-  }) => Promise<{ storage_path: string; cdn_url: string; prompt: string }>;
+  }) => Promise<{ storage_path: string; prompt: string }>;
 }
 
 function paramAs(value: unknown): string | undefined {
@@ -340,7 +340,11 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
         .from('daily_briefing_days')
         .update({
           image_storage_path: result.storage_path,
-          image_cdn_url: result.cdn_url,
+          // image_cdn_url intentionally not set: storage path is the
+          // source of truth; consumers resolve to a full URL at read
+          // time via toPublicUrl. The column is kept for legacy reads
+          // and may be dropped in a later migration.
+          image_cdn_url: null,
           image_prompt: result.prompt,
           image_generated_at: new Date().toISOString(),
           image_status: 'ready',

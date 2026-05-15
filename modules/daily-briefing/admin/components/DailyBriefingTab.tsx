@@ -42,6 +42,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { toPublicUrl } from '@gatewaze/shared';
+
 import { Button, Modal, Badge } from '@/components/ui';
 import { ConfirmModal } from '@/components/shared/ConfirmModal';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
@@ -64,6 +66,15 @@ import {
 } from '../utils/dailyBriefingService';
 
 type DayWithItems = DailyBriefingDay & { items: DailyBriefingItem[] };
+
+// Storage paths are stored relative on the row; resolve to a public URL
+// at read time using the same VITE_SUPABASE_URL-derived bucket the events
+// admin uses (see gatewaze-modules/events/admin/utils/eventService.ts).
+const BUCKET_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/media`;
+
+function coverUrl(day: Pick<DailyBriefingDay, 'image_storage_path'>): string | null {
+  return toPublicUrl(day.image_storage_path, BUCKET_URL);
+}
 
 interface ItemDraft {
   id?: string;
@@ -529,7 +540,7 @@ export default function DailyBriefingTab() {
       )}
 
       {/* Image preview modal */}
-      {previewImage && previewImage.image_cdn_url && (
+      {previewImage && coverUrl(previewImage) && (
         <Modal
           isOpen
           onClose={() => setPreviewImage(null)}
@@ -538,7 +549,7 @@ export default function DailyBriefingTab() {
         >
           <div className="space-y-3">
             <img
-              src={previewImage.image_cdn_url}
+              src={coverUrl(previewImage) ?? ''}
               alt={`Daily briefing cover for ${previewImage.brief_date}`}
               className="w-full rounded-md border"
             />
@@ -618,7 +629,7 @@ function DaySection({
     <section className="rounded-lg border">
       <header className="flex items-start gap-4 p-4 border-b bg-neutral-50">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {day.image_cdn_url ? (
+          {coverUrl(day) ? (
             <button
               type="button"
               onClick={onPreviewImage}
@@ -626,7 +637,7 @@ function DaySection({
               title="Preview cover"
             >
               <img
-                src={day.image_cdn_url}
+                src={coverUrl(day) ?? ''}
                 alt={`Cover for ${day.brief_date}`}
                 className="size-full object-cover"
               />
@@ -653,7 +664,7 @@ function DaySection({
             size="sm"
             onClick={onGenerateImage}
             disabled={generating || day.image_status === 'generating'}
-            title={day.image_cdn_url ? 'Regenerate cover image' : 'Generate cover image'}
+            title={coverUrl(day) ? 'Regenerate cover image' : 'Generate cover image'}
           >
             {generating || day.image_status === 'generating' ? (
               <ArrowPathIcon className="size-4 animate-spin" />
@@ -661,7 +672,7 @@ function DaySection({
               <SparklesIcon className="size-4" />
             )}
             <span className="ml-1.5 text-xs">
-              {day.image_cdn_url ? 'Regenerate' : 'Generate image'}
+              {coverUrl(day) ? 'Regenerate' : 'Generate image'}
             </span>
           </Button>
           <Button

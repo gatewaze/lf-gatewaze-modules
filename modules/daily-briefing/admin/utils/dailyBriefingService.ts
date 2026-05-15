@@ -21,7 +21,6 @@ export interface DailyBriefingDay {
   brief_date: string; // YYYY-MM-DD
   status: DailyBriefingStatus;
   image_storage_path: string | null;
-  image_cdn_url: string | null;
   image_prompt: string | null;
   image_generated_at: string | null;
   image_status: DailyBriefingImageStatus;

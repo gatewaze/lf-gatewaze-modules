@@ -117,7 +117,7 @@ describe('daily-briefing public routes', () => {
         id: SAMPLE_UUID,
         site_id: SITE_UUID,
         brief_date: '2026-05-14',
-        image_cdn_url: 'https://example.com/cover.png',
+        image_storage_path: 'daily_briefing_day/abc/cover-2026-05-14.png',
         image_generated_at: '2026-05-14T10:00:00Z',
       };
       const items = [
@@ -135,7 +135,7 @@ describe('daily-briefing public routes', () => {
         day: {
           id: day.id,
           brief_date: day.brief_date,
-          image_cdn_url: day.image_cdn_url,
+          image_storage_path: day.image_storage_path,
           image_generated_at: day.image_generated_at,
         },
         items,
@@ -214,7 +214,7 @@ describe('daily-briefing public routes', () => {
         id: SAMPLE_UUID,
         site_id: SITE_UUID,
         brief_date: '2026-05-14',
-        image_cdn_url: null,
+        image_storage_path: null,
         image_generated_at: null,
       };
       supabase.queueResponse('daily_briefing_days', { data: day, error: null });

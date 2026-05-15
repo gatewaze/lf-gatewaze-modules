@@ -17,7 +17,7 @@
  *     "day": {
  *       "id": "...",
  *       "brief_date": "2026-05-14",
- *       "image_cdn_url": "https://.../image.png" | null,
+ *       "image_storage_path": "daily_briefing_day/.../cover.png" | null,
  *       "image_generated_at": "..." | null
  *     },
  *     "items": [
@@ -54,7 +54,7 @@ const DAY_COLUMNS = [
   'id',
   'site_id',
   'brief_date',
-  'image_cdn_url',
+  'image_storage_path',
   'image_generated_at',
 ].join(', ');
 
@@ -123,7 +123,7 @@ export function createPublicDailyBriefingRoutes(deps: PublicDailyBriefingRoutesD
       id: string;
       site_id: string;
       brief_date: string;
-      image_cdn_url: string | null;
+      image_storage_path: string | null;
       image_generated_at: string | null;
     };
 
@@ -153,7 +153,7 @@ export function createPublicDailyBriefingRoutes(deps: PublicDailyBriefingRoutesD
         day: {
           id: day.id,
           brief_date: day.brief_date,
-          image_cdn_url: day.image_cdn_url,
+          image_storage_path: day.image_storage_path,
           image_generated_at: day.image_generated_at,
         },
         items: (itemsResult.data ?? []) as unknown[],
