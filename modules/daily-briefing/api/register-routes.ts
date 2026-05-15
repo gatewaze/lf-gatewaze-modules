@@ -35,6 +35,7 @@ import {
   mountAdminDailyBriefingRoutes,
 } from './admin-routes.js';
 import { makeDayImageGenerator } from '../lib/gemini-image.js';
+import { makeResearchRunner } from '../lib/research-runner.js';
 
 interface PlatformLogger {
   info: (msg: string, meta?: Record<string, unknown>) => void;
@@ -86,6 +87,31 @@ export function registerRoutes(app: Express): void {
     );
   }
 
+  // Research autopilot dependency. Needs Claude (Anthropic) + the
+  // internal scrapling-fetcher reachable on the cluster network.
+  // If either is missing we surface a clean 503 from the admin endpoint
+  // rather than crashing on first invoke.
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY ?? '';
+  const scraplingFetcherUrl = process.env.SCRAPLING_FETCHER_URL ?? '';
+  const scraplingInternalToken = process.env.SCRAPLING_INTERNAL_TOKEN ?? '';
+  const runResearch =
+    anthropicApiKey && scraplingFetcherUrl && scraplingInternalToken
+      ? makeResearchRunner({
+          anthropicApiKey,
+          scraplingFetcherUrl,
+          scraplingInternalToken,
+        })
+      : undefined;
+  if (!runResearch) {
+    const missing: string[] = [];
+    if (!anthropicApiKey) missing.push('ANTHROPIC_API_KEY');
+    if (!scraplingFetcherUrl) missing.push('SCRAPLING_FETCHER_URL');
+    if (!scraplingInternalToken) missing.push('SCRAPLING_INTERNAL_TOKEN');
+    logger.warn(
+      `daily-briefing research autopilot disabled: missing ${missing.join(', ')} (admin returns 503)`,
+    );
+  }
+
   // Admin CRUD. The platform labels /api/modules/<id> as 'jwt', so
   // the JWT middleware gates these handlers before they run.
   const adminRouter = Router();
@@ -93,6 +119,7 @@ export function registerRoutes(app: Express): void {
     supabase,
     logger,
     generateDayImage,
+    runResearch,
   });
   mountAdminDailyBriefingRoutes(adminRouter, adminRoutes);
   app.use('/api/modules/daily-briefing', adminRouter);

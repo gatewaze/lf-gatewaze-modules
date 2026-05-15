@@ -28,4 +28,29 @@ describe('buildDailyBriefingImagePrompt', () => {
     ]);
     expect(prompt).toContain('1. Lead — trailing (source: Source)');
   });
+
+  it('asks for a single panel when given exactly one story', () => {
+    const prompt = buildDailyBriefingImagePrompt([
+      { title: 'a', summary: 'b', source_label: 'c' },
+    ]);
+    expect(prompt).toContain('single illustrated panel or vignette');
+    expect(prompt).not.toContain('[PanelInstruction]');
+    // Must not carry over the old hardcoded "3 to 5" language.
+    expect(prompt).not.toContain('3 to 5');
+  });
+
+  it('asks for exactly N panels matching the story count', () => {
+    for (const n of [2, 3, 4, 5]) {
+      const prompt = buildDailyBriefingImagePrompt(
+        Array.from({ length: n }, (_, i) => ({
+          title: `t${i}`,
+          summary: `s${i}`,
+          source_label: `src${i}`,
+        })),
+      );
+      expect(prompt).toContain(`Render exactly ${n} visual story beats or panels`);
+      expect(prompt).not.toContain('[PanelInstruction]');
+      expect(prompt).not.toContain('3 to 5');
+    }
+  });
 });

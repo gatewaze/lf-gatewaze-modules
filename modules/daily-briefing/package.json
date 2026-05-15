@@ -16,6 +16,7 @@
   },
   "peerDependencies": {
     "@gatewaze/shared": "*",
+    "@gatewaze-modules/editor-ai-copilot": "*",
     "@supabase/supabase-js": "*",
     "express": "*",
     "react": "*"

@@ -30,7 +30,7 @@ Fixed format:
 
 Content rules:
 - Base the issue on the stories
-- Convert the stories into 3 to 5 visual story beats or panels.
+[PanelInstruction]
 - Preserve the factual meaning of the provided stories; do not invent claims, company announcements, statistics, or names that were not provided.
 - Shorten story language aggressively so the graphic is readable.
 - Use witty newspaper/comic-style labels, but keep them grounded.
@@ -67,5 +67,21 @@ export function buildDailyBriefingImagePrompt(stories: DailyBriefingStory[]): st
         `${i + 1}. ${s.title.trim()} — ${s.summary.trim()} (source: ${s.source_label.trim()})`,
     )
     .join('\n');
-  return PROMPT_TEMPLATE.replace('[Stories]', lines);
+  const panelInstruction = buildPanelInstruction(stories.length);
+  return PROMPT_TEMPLATE
+    .replace('[Stories]', lines)
+    .replace('[PanelInstruction]', panelInstruction);
+}
+
+/**
+ * Tell Gemini exactly how many panels to draw, matching the number of
+ * stories supplied. Singular for n=1; explicit count otherwise. The
+ * caller is responsible for capping the input list (see
+ * MAX_STORIES_PER_COVER in admin-routes.ts).
+ */
+function buildPanelInstruction(n: number): string {
+  if (n <= 1) {
+    return '- Render the story as a single illustrated panel or vignette that fills the layout.';
+  }
+  return `- Render exactly ${n} visual story beats or panels — one per story, in the order provided. Do not invent additional panels.`;
 }
