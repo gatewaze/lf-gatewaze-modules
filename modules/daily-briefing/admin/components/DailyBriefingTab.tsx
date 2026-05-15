@@ -45,8 +45,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { toPublicUrl } from '@gatewaze/shared';
 
 import { Button, Modal, Badge } from '@/components/ui';
-import { ConfirmModal } from '@/components/shared/ConfirmModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
+
+import ResearchPanel from './ResearchPanel';
 
 import {
   listDailyBriefingDays,
@@ -412,6 +414,7 @@ export default function DailyBriefingTab() {
               onDeleteItem={setDeletingItem}
               onTogglePublishItem={toggleItemPublish}
               onDragEnd={(e) => handleDragEnd(day.id, e)}
+              onCandidateApproved={() => void load()}
             />
           ))}
         </div>
@@ -605,6 +608,7 @@ function DaySection({
   onDeleteItem,
   onTogglePublishItem,
   onDragEnd,
+  onCandidateApproved,
 }: {
   day: DayWithItems;
   generating: boolean;
@@ -618,12 +622,14 @@ function DaySection({
   onDeleteItem: (item: DailyBriefingItem) => void;
   onTogglePublishItem: (item: DailyBriefingItem) => void;
   onDragEnd: (e: DragEndEvent) => void;
+  onCandidateApproved: () => void;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
   const itemIds = useMemo(() => day.items.map((i) => i.id), [day.items]);
+  const [researchOpen, setResearchOpen] = useState(false);
 
   return (
     <section className="rounded-lg border">
@@ -724,12 +730,30 @@ function DaySection({
           </DndContext>
         )}
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-between items-center pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setResearchOpen((v) => !v)}
+          >
+            <SparklesIcon className="size-4 mr-1 text-amber-600" />
+            {researchOpen ? 'Hide research' : 'Research autopilot'}
+          </Button>
           <Button variant="ghost" size="sm" onClick={onAddItem}>
             <PlusIcon className="size-4 mr-1" />
             Add story
           </Button>
         </div>
+
+        {researchOpen && (
+          <div className="pt-3">
+            <ResearchPanel
+              dayId={day.id}
+              briefDate={day.brief_date}
+              onCandidateApproved={onCandidateApproved}
+            />
+          </div>
+        )}
       </div>
     </section>
   );

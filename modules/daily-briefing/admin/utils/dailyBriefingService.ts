@@ -214,6 +214,88 @@ export async function reorderDailyBriefingItems(
   await jsonOrThrow<{ reordered: number }>(res);
 }
 
+// ── Research autopilot ──────────────────────────────────────────────────────
+
+export type ResearchThreadStatus = 'idle' | 'running' | 'ready' | 'failed';
+
+export interface ResearchCandidate {
+  title: string;
+  summary: string;
+  source_label: string;
+  source_href: string;
+  why: string;
+}
+
+export interface ResearchThread {
+  id: string;
+  day_id: string;
+  status: ResearchThreadStatus;
+  last_error: string | null;
+  input_tokens: number;
+  output_tokens: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResearchMessage {
+  id: string;
+  thread_id: string;
+  role: 'system' | 'user' | 'assistant' | 'tool_summary';
+  content: string;
+  candidates: ResearchCandidate[] | null;
+  created_at: string;
+}
+
+export async function getResearchThread(
+  dayId: string,
+): Promise<{ thread: ResearchThread; messages: ResearchMessage[] }> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/days/${dayId}/research`,
+  );
+  return jsonOrThrow<{ thread: ResearchThread; messages: ResearchMessage[] }>(res);
+}
+
+export async function deleteResearchThread(dayId: string): Promise<void> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/days/${dayId}/research`,
+    { method: 'DELETE' },
+  );
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
+}
+
+/**
+ * Send a message to the autopilot. Pass `message` empty/omitted to
+ * trigger the autopilot kickoff (used by the auto-research entry).
+ */
+export async function postResearchMessage(
+  dayId: string,
+  message?: string,
+): Promise<{ thread: ResearchThread; message: ResearchMessage }> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/days/${dayId}/research/messages`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ message: message ?? '' }),
+    },
+  );
+  return jsonOrThrow<{ thread: ResearchThread; message: ResearchMessage }>(res);
+}
+
+export async function approveResearchCandidate(
+  dayId: string,
+  messageId: string,
+  candidateIndex: number,
+): Promise<DailyBriefingItem> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/days/${dayId}/research/approve`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ message_id: messageId, candidate_index: candidateIndex }),
+    },
+  );
+  return jsonOrThrow<DailyBriefingItem>(res);
+}
+
 // ── Site picker ─────────────────────────────────────────────────────────────
 
 export async function getDefaultSiteId(): Promise<string | null> {
