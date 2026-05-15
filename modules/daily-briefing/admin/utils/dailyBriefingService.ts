@@ -1,50 +1,224 @@
+/**
+ * Admin-side client for the daily-briefing module's day-grouped REST
+ * surface. Talks to the /api/modules/daily-briefing/admin/* endpoints
+ * with the operator's bearer token.
+ *
+ * The platform's webhook layer-2 system fires revalidateTag on mutation
+ * automatically (see daily-briefing/migrations/004_webhook_topics_days
+ * + the webhooks module), so this client does NOT need to manually
+ * trigger a republish after writes — that was the pattern in v1 before
+ * the webhook fan-out shipped.
+ */
+
 import { supabase } from '@/lib/supabase';
+
+export type DailyBriefingStatus = 'draft' | 'published' | 'archived';
+export type DailyBriefingImageStatus = 'idle' | 'generating' | 'ready' | 'failed';
+
+export interface DailyBriefingDay {
+  id: string;
+  site_id: string;
+  brief_date: string; // YYYY-MM-DD
+  status: DailyBriefingStatus;
+  image_storage_path: string | null;
+  image_cdn_url: string | null;
+  image_prompt: string | null;
+  image_generated_at: string | null;
+  image_status: DailyBriefingImageStatus;
+  image_error: string | null;
+  created_at: string;
+  updated_at: string;
+  /** Hydrated by the admin list endpoint, NOT a column. */
+  item_count: number;
+  /** Hydrated by the admin list endpoint, NOT a column. */
+  published_item_count: number;
+}
 
 export interface DailyBriefingItem {
   id: string;
-  site_id: string;
+  day_id: string;
+  display_order: number;
   title: string;
   summary: string;
-  brief_date: string; // ISO date 'YYYY-MM-DD'
   source_label: string;
   source_href: string;
-  status: 'draft' | 'published' | 'archived';
-  is_pinned: boolean;
+  status: DailyBriefingStatus;
   created_at: string;
   updated_at: string;
 }
 
-export type DailyBriefingItemInput = Partial<
-  Omit<DailyBriefingItem, 'id' | 'created_at' | 'updated_at'>
-> & {
-  site_id: string;
+export interface DailyBriefingItemInput {
+  day_id: string;
   title: string;
   summary: string;
-  brief_date: string;
   source_label: string;
   source_href: string;
-};
-
-export async function listDailyBriefingItems(
-  siteId?: string,
-): Promise<DailyBriefingItem[]> {
-  let query = supabase
-    .from('daily_briefing_items')
-    .select('*')
-    .order('is_pinned', { ascending: false })
-    .order('brief_date', { ascending: false })
-    .order('created_at', { ascending: false });
-  if (siteId) query = query.eq('site_id', siteId);
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []) as DailyBriefingItem[];
+  status?: DailyBriefingStatus;
+  display_order?: number;
 }
 
+export interface DailyBriefingDayInput {
+  site_id: string;
+  brief_date: string;
+  status?: DailyBriefingStatus;
+}
+
+function apiUrl(): string {
+  return (import.meta as { env: Record<string, string | undefined> }).env.VITE_API_URL ?? '';
+}
+
+async function authedFetch(
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const { data: session } = await supabase.auth.getSession();
+  const token = session.session?.access_token;
+  const res = await fetch(`${apiUrl()}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init.headers ?? {}),
+    },
+  });
+  return res;
+}
+
+async function jsonOrThrow<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = (await res.json()) as { error?: string; message?: string };
+      if (body.message) detail = body.message;
+      else if (body.error) detail = body.error;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+  return (await res.json()) as T;
+}
+
+// ── Days ────────────────────────────────────────────────────────────────────
+
+export async function listDailyBriefingDays(
+  siteId?: string,
+): Promise<DailyBriefingDay[]> {
+  const qs = siteId ? `?site_id=${encodeURIComponent(siteId)}` : '';
+  const res = await authedFetch(`/api/modules/daily-briefing/admin/days${qs}`);
+  const body = await jsonOrThrow<{ days: DailyBriefingDay[] }>(res);
+  return body.days;
+}
+
+export async function createDailyBriefingDay(
+  input: DailyBriefingDayInput,
+): Promise<DailyBriefingDay> {
+  const res = await authedFetch(`/api/modules/daily-briefing/admin/days`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return jsonOrThrow<DailyBriefingDay>(res);
+}
+
+export async function updateDailyBriefingDay(
+  id: string,
+  patch: Partial<Pick<DailyBriefingDay, 'brief_date' | 'status'>>,
+): Promise<DailyBriefingDay> {
+  const res = await authedFetch(`/api/modules/daily-briefing/admin/days/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+  return jsonOrThrow<DailyBriefingDay>(res);
+}
+
+export async function deleteDailyBriefingDay(id: string): Promise<void> {
+  const res = await authedFetch(`/api/modules/daily-briefing/admin/days/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
+}
+
+export async function generateDailyBriefingDayImage(
+  id: string,
+): Promise<DailyBriefingDay> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/days/${id}/generate-image`,
+    { method: 'POST' },
+  );
+  return jsonOrThrow<DailyBriefingDay>(res);
+}
+
+// ── Items ───────────────────────────────────────────────────────────────────
+
+/**
+ * Lists items grouped by day. Each day's items are pre-sorted by
+ * display_order ASC. Querying Supabase directly (admin RLS allows
+ * authenticated SELECT). The API would just proxy the same query.
+ */
+export async function listDailyBriefingItemsByDay(
+  dayIds: string[],
+): Promise<Map<string, DailyBriefingItem[]>> {
+  const grouped = new Map<string, DailyBriefingItem[]>();
+  for (const id of dayIds) grouped.set(id, []);
+  if (dayIds.length === 0) return grouped;
+
+  const { data, error } = await supabase
+    .from('daily_briefing_items')
+    .select('*')
+    .in('day_id', dayIds)
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  for (const row of (data ?? []) as DailyBriefingItem[]) {
+    const arr = grouped.get(row.day_id);
+    if (arr) arr.push(row);
+  }
+  return grouped;
+}
+
+export async function createDailyBriefingItem(
+  input: DailyBriefingItemInput,
+): Promise<DailyBriefingItem> {
+  const res = await authedFetch(`/api/modules/daily-briefing/admin/items`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return jsonOrThrow<DailyBriefingItem>(res);
+}
+
+export async function updateDailyBriefingItem(
+  id: string,
+  patch: Partial<Omit<DailyBriefingItemInput, 'day_id'>>,
+): Promise<DailyBriefingItem> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/items/${id}`,
+    { method: 'PATCH', body: JSON.stringify(patch) },
+  );
+  return jsonOrThrow<DailyBriefingItem>(res);
+}
+
+export async function deleteDailyBriefingItem(id: string): Promise<void> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/items/${id}`,
+    { method: 'DELETE' },
+  );
+  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
+}
+
+export async function reorderDailyBriefingItems(
+  items: Array<{ id: string; display_order: number }>,
+): Promise<void> {
+  const res = await authedFetch(
+    `/api/modules/daily-briefing/admin/items/reorder`,
+    { method: 'POST', body: JSON.stringify({ items }) },
+  );
+  await jsonOrThrow<{ reordered: number }>(res);
+}
+
+// ── Site picker ─────────────────────────────────────────────────────────────
+
 export async function getDefaultSiteId(): Promise<string | null> {
-  // Pick the most-recently-created site. Dev DBs accumulate stub
-  // "site one / two / three" rows from earlier testing; the actual
-  // active site (AAIF) is the most recent one. Replace with a proper
-  // site picker once the admin grows multi-site UX.
+  // Most-recently-created site (dev DBs accumulate stub rows).
   const { data, error } = await supabase
     .from('sites')
     .select('id')
@@ -53,75 +227,4 @@ export async function getDefaultSiteId(): Promise<string | null> {
     .maybeSingle();
   if (error) return null;
   return (data as { id?: string } | null)?.id ?? null;
-}
-
-/**
- * Fire-and-forget republish trigger. Called after a successful mutation
- * so the published site picks up the change without a manual click.
- * Errors are swallowed; the mutation has already succeeded by then.
- */
-async function triggerRepublish(siteId: string, reason: string): Promise<void> {
-  try {
-    const apiUrl = (import.meta as { env: Record<string, string | undefined> }).env.VITE_API_URL ?? '';
-    const { data: session } = await supabase.auth.getSession();
-    const token = session.session?.access_token;
-    await fetch(`${apiUrl}/api/admin/sites/${siteId}/publish`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ reason, force: false }),
-      keepalive: true,
-    });
-  } catch (err) {
-    console.warn('[daily-briefing] auto-republish trigger failed', err);
-  }
-}
-
-export async function createDailyBriefingItem(
-  input: DailyBriefingItemInput,
-): Promise<DailyBriefingItem> {
-  const { data, error } = await supabase
-    .from('daily_briefing_items')
-    .insert(input)
-    .select('*')
-    .single();
-  if (error) throw error;
-  const row = data as DailyBriefingItem;
-  void triggerRepublish(row.site_id, `daily-briefing-create:${row.brief_date}`);
-  return row;
-}
-
-export async function updateDailyBriefingItem(
-  id: string,
-  patch: Partial<DailyBriefingItemInput>,
-): Promise<DailyBriefingItem> {
-  const { data, error } = await supabase
-    .from('daily_briefing_items')
-    .update(patch)
-    .eq('id', id)
-    .select('*')
-    .single();
-  if (error) throw error;
-  const row = data as DailyBriefingItem;
-  void triggerRepublish(row.site_id, `daily-briefing-update:${row.brief_date}`);
-  return row;
-}
-
-export async function deleteDailyBriefingItem(id: string): Promise<void> {
-  const { data: existing } = await supabase
-    .from('daily_briefing_items')
-    .select('site_id, brief_date')
-    .eq('id', id)
-    .maybeSingle();
-  const { error } = await supabase
-    .from('daily_briefing_items')
-    .delete()
-    .eq('id', id);
-  if (error) throw error;
-  const e = existing as { site_id?: string; brief_date?: string } | null;
-  if (e?.site_id) {
-    void triggerRepublish(e.site_id, `daily-briefing-delete:${e.brief_date ?? id}`);
-  }
 }

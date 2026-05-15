@@ -17,6 +17,8 @@ const dailyBriefingModule: GatewazeModule = {
   migrations: [
     'migrations/001_daily_briefing_init.sql',
     'migrations/002_webhook_topic.sql',
+    'migrations/003_restructure_to_days.sql',
+    'migrations/004_webhook_topics_days.sql',
   ],
 
   apiRoutes: async (app: unknown) => {

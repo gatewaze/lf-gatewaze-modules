@@ -1,25 +1,39 @@
 /**
- * Public read-only daily-briefing API.
+ * Public read-only daily-briefing API (day-grouped shape).
  *
  * Mounted on the platform's public router (no JWT required). The AAIF
- * Next.js theme consumes these endpoints to render the home-page Hero
- * sidebar ("Daily Agentic AI LinkedIn Newsletter") from Gatewaze's
- * `daily_briefing_items` table.
+ * Next.js theme consumes this endpoint to render the home-page Hero
+ * sidebar ("Daily Agentic AI LinkedIn Newsletter").
  *
- *   GET /api/daily-briefing                  — list published items
- *     ?limit=N (default 20, max 100)
- *     ?offset=N
- *     ?pinned=true                            — only is_pinned rows
- *     ?search=<text>                          — ilike on title + summary
- *     ?site_id=<uuid>                         — restrict to one site (optional)
- *   GET /api/daily-briefing/:id               — single item by id
+ *   GET /api/daily-briefing
+ *     ?site_id=<uuid>   — restrict to one site (optional; first published
+ *                          day across all sites otherwise — useful for the
+ *                          single-tenant AAIF deploy where the dev DB has
+ *                          stub sites)
  *
- * All endpoints:
- *   - filter to status='published'
- *   - Cache-Control: public, max-age=60, s-maxage=300
- *   - no auth required
+ * Returns the most-recent published day:
  *
- * Sort order: is_pinned DESC, brief_date DESC, created_at DESC.
+ *   {
+ *     "day": {
+ *       "id": "...",
+ *       "brief_date": "2026-05-14",
+ *       "image_cdn_url": "https://.../image.png" | null,
+ *       "image_generated_at": "..." | null
+ *     },
+ *     "items": [
+ *       { "id": "...", "title": "...", "summary": "...",
+ *         "source_label": "...", "source_href": "...",
+ *         "display_order": 1000 },
+ *       ...
+ *     ]
+ *   }
+ *
+ * - At most 3 published items are returned (operator chooses ordering via
+ *   the admin UI's drag-handles → display_order).
+ * - If no published day exists, returns 200 with `{ day: null, items: [] }`
+ *   so the theme can render a graceful empty state.
+ *
+ * Cache-Control / Surrogate-Key / ETag per §5.4 of the cache spec.
  */
 
 import { createHash } from 'node:crypto';
@@ -31,25 +45,27 @@ interface ErrorEnvelope {
   message: string;
 }
 
-const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 100;
 const CACHE_HEADER = 'public, max-age=60, s-maxage=300, stale-if-error=86400';
-
-const LIST_COLUMNS = [
-  'id',
-  'site_id',
-  'title',
-  'summary',
-  'brief_date',
-  'source_label',
-  'source_href',
-  'is_pinned',
-].join(', ');
-
-// Detail endpoint returns the same shape (no extra fields for v1).
-const DETAIL_COLUMNS = LIST_COLUMNS;
+const PUBLIC_ITEMS_PER_DAY = 3;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const DAY_COLUMNS = [
+  'id',
+  'site_id',
+  'brief_date',
+  'image_cdn_url',
+  'image_generated_at',
+].join(', ');
+
+const ITEM_COLUMNS = [
+  'id',
+  'title',
+  'summary',
+  'source_label',
+  'source_href',
+  'display_order',
+].join(', ');
 
 export interface PublicDailyBriefingRoutesDeps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,62 +82,67 @@ function paramAs(value: unknown): string | undefined {
   return undefined;
 }
 
-function clampLimit(raw: string | undefined): number {
-  const n = raw ? parseInt(raw, 10) : DEFAULT_LIMIT;
-  if (!Number.isInteger(n) || n < 1) return DEFAULT_LIMIT;
-  return Math.min(n, MAX_LIMIT);
-}
-
-function clampOffset(raw: string | undefined): number {
-  const n = raw ? parseInt(raw, 10) : 0;
-  if (!Number.isInteger(n) || n < 0) return 0;
-  return n;
-}
-
 export function createPublicDailyBriefingRoutes(deps: PublicDailyBriefingRoutesDeps) {
   const { supabase, logger } = deps;
 
-  async function listItems(req: Request, res: Response): Promise<void> {
-    const limit = clampLimit(paramAs(req.query.limit));
-    const offset = clampOffset(paramAs(req.query.offset));
-    const search = paramAs(req.query.search);
-    const pinned = paramAs(req.query.pinned) === 'true';
+  async function getMostRecentDay(req: Request, res: Response): Promise<void> {
     const siteId = paramAs(req.query.site_id);
+    if (siteId && !UUID_RE.test(siteId)) {
+      sendError(res, 400, 'bad_request', 'site_id must be a uuid');
+      return;
+    }
 
-    let query = supabase
-      .from('daily_briefing_items')
-      .select(LIST_COLUMNS)
+    // 1. Find the most-recent published day.
+    let dayQuery = supabase
+      .from('daily_briefing_days')
+      .select(DAY_COLUMNS)
       .eq('status', 'published')
-      .order('is_pinned', { ascending: false })
       .order('brief_date', { ascending: false })
-      .order('created_at', { ascending: false });
+      .limit(1);
+    if (siteId) dayQuery = dayQuery.eq('site_id', siteId);
 
-    if (siteId) {
-      if (!UUID_RE.test(siteId)) {
-        sendError(res, 400, 'bad_request', 'site_id must be a uuid');
-        return;
-      }
-      query = query.eq('site_id', siteId);
+    const dayResult = await dayQuery.maybeSingle();
+    if (dayResult.error) {
+      logger.warn('daily-briefing.public.day.db_error', {
+        error: dayResult.error.message,
+      });
+      sendError(res, 500, 'internal', String(dayResult.error.message ?? ''));
+      return;
     }
-
-    if (pinned) query = query.eq('is_pinned', true);
-
-    if (search) {
-      // ilike on title + summary. PostgREST `.or()` is a known injection
-      // vector — strip filter metacharacters and cap length before
-      // interpolation. (Same pattern as press / projects public-routes.)
-      const safe = String(search).replace(/[,()*\\]/g, '').slice(0, 100);
-      if (safe.length > 0) {
-        query = query.or(`title.ilike.%${safe}%,summary.ilike.%${safe}%`);
-      }
+    if (!dayResult.data) {
+      // No published day yet — return an empty envelope, still cacheable.
+      sendCacheable(
+        req,
+        res,
+        { day: null, items: [] },
+        ['daily-briefing'],
+      );
+      return;
     }
+    const day = dayResult.data as {
+      id: string;
+      site_id: string;
+      brief_date: string;
+      image_cdn_url: string | null;
+      image_generated_at: string | null;
+    };
 
-    query = query.range(offset, offset + limit - 1);
+    // 2. Pull this day's published items, ordered by drag-drop position.
+    const itemsResult = await supabase
+      .from('daily_briefing_items')
+      .select(ITEM_COLUMNS)
+      .eq('day_id', day.id)
+      .eq('status', 'published')
+      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: true })
+      .limit(PUBLIC_ITEMS_PER_DAY);
 
-    const result = await query;
-    if (result.error) {
-      logger.warn('daily-briefing.public.list.db_error', { error: result.error.message });
-      sendError(res, 500, 'internal', String(result.error.message ?? ''));
+    if (itemsResult.error) {
+      logger.warn('daily-briefing.public.items.db_error', {
+        error: itemsResult.error.message,
+        day_id: day.id,
+      });
+      sendError(res, 500, 'internal', String(itemsResult.error.message ?? ''));
       return;
     }
 
@@ -129,61 +150,26 @@ export function createPublicDailyBriefingRoutes(deps: PublicDailyBriefingRoutesD
       req,
       res,
       {
-        items: (result.data ?? []) as unknown[],
-        limit,
-        offset,
+        day: {
+          id: day.id,
+          brief_date: day.brief_date,
+          image_cdn_url: day.image_cdn_url,
+          image_generated_at: day.image_generated_at,
+        },
+        items: (itemsResult.data ?? []) as unknown[],
       },
-      ['daily-briefing'],
+      ['daily-briefing', `daily-briefing:day:${day.brief_date}`],
     );
   }
 
-  async function getItem(req: Request, res: Response): Promise<void> {
-    const id = paramAs(req.params.id);
-    if (!id) {
-      sendError(res, 400, 'missing_id', 'id required');
-      return;
-    }
-    if (!UUID_RE.test(id)) {
-      sendError(res, 404, 'not_found', `daily briefing item '${id}' not found`);
-      return;
-    }
-
-    const siteId = paramAs(req.query.site_id);
-    if (siteId && !UUID_RE.test(siteId)) {
-      sendError(res, 400, 'bad_request', 'site_id must be a uuid');
-      return;
-    }
-
-    let query = supabase
-      .from('daily_briefing_items')
-      .select(DETAIL_COLUMNS)
-      .eq('id', id)
-      .eq('status', 'published');
-    if (siteId) query = query.eq('site_id', siteId);
-
-    const result = await query.maybeSingle();
-    if (result.error) {
-      logger.warn('daily-briefing.public.detail.db_error', { error: result.error.message, id });
-      sendError(res, 500, 'internal', String(result.error.message ?? ''));
-      return;
-    }
-    if (!result.data) {
-      sendError(res, 404, 'not_found', `daily briefing item '${id}' not found`);
-      return;
-    }
-
-    sendCacheable(req, res, result.data, ['daily-briefing', `daily-briefing:${id}`]);
-  }
-
-  return { listItems, getItem };
+  return { getMostRecentDay };
 }
 
 export function mountPublicDailyBriefingRoutes(
   router: Router,
   routes: ReturnType<typeof createPublicDailyBriefingRoutes>,
 ): void {
-  router.get('/daily-briefing', routes.listItems);
-  router.get('/daily-briefing/:id', routes.getItem);
+  router.get('/daily-briefing', routes.getMostRecentDay);
 }
 
 function sendError(res: Response, status: number, error: string, message: string): void {
@@ -198,9 +184,6 @@ function sendError(res: Response, status: number, error: string, message: string
  *   ETag:           W/"<sha256(body)[0:16]>"
  *
  * Spec: §5.4 of spec-api-cache-and-revalidation.md.
- *
- * If the client's `If-None-Match` matches the computed ETag we return
- * 304 with no body (origin bandwidth save inside the max-age window).
  */
 function sendCacheable(
   req: Request,

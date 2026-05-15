@@ -34,6 +34,7 @@ import {
   createAdminDailyBriefingRoutes,
   mountAdminDailyBriefingRoutes,
 } from './admin-routes.js';
+import { makeDayImageGenerator } from '../lib/gemini-image.js';
 
 interface PlatformLogger {
   info: (msg: string, meta?: Record<string, unknown>) => void;
@@ -68,10 +69,33 @@ export function registerRoutes(app: Express): void {
   mountPublicDailyBriefingRoutes(publicRouter, publicRoutes);
   app.use('/api', publicRouter);
 
+  // Image-gen dependency. Optional — if GEMINI_API_KEY isn't set we
+  // pass `undefined` through and the admin endpoint returns 503 with a
+  // useful message rather than 500 on first invoke.
+  const geminiApiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? '';
+  const publicSupabaseUrl =
+    process.env.PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
+  const generateDayImage = geminiApiKey
+    ? makeDayImageGenerator({
+        apiKey: geminiApiKey,
+        supabase,
+        publicSupabaseUrl,
+      })
+    : undefined;
+  if (!geminiApiKey) {
+    logger.warn(
+      'GEMINI_API_KEY not set — daily-briefing image generation disabled (admin returns 503)',
+    );
+  }
+
   // Admin CRUD. The platform labels /api/modules/<id> as 'jwt', so
   // the JWT middleware gates these handlers before they run.
   const adminRouter = Router();
-  const adminRoutes = createAdminDailyBriefingRoutes({ supabase, logger });
+  const adminRoutes = createAdminDailyBriefingRoutes({
+    supabase,
+    logger,
+    generateDayImage,
+  });
   mountAdminDailyBriefingRoutes(adminRouter, adminRoutes);
   app.use('/api/modules/daily-briefing', adminRouter);
 

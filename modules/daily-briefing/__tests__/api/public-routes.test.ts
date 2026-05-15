@@ -1,10 +1,9 @@
 /**
- * Daily-briefing module — public-routes unit tests.
+ * Daily-briefing module — public-routes unit tests (day-grouped shape).
  *
- * We mount `createPublicDailyBriefingRoutes` against an Express app with
- * a hand-rolled supabase chain stub. The stub records every chained call
- * so tests can assert on the actual PostgREST builder used (status filter,
- * order, range, .or() sanitisation, etc.) without touching a real DB.
+ * The route now returns ONE envelope: `{ day: {...} | null, items: [...] }`,
+ * pulled from `daily_briefing_days` (most-recent published) + that day's
+ * first 3 published items ordered by display_order.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -19,46 +18,51 @@ import {
 interface ChainState {
   table: string;
   ops: Array<{ op: string; args: unknown[] }>;
-  result: { data: unknown; error: unknown };
-  singleResult: { data: unknown; error: unknown } | null;
 }
 
+interface MockedResponse {
+  data: unknown;
+  error: unknown;
+}
+
+/**
+ * The chain proxy answers `await chain` (lists) AND `.maybeSingle()`
+ * (single-row reads). Tests queue the next response per-table so the
+ * routes that hit BOTH `daily_briefing_days` (single) and
+ * `daily_briefing_items` (list) in one request can be exercised.
+ */
 function makeStubSupabase() {
   const calls: ChainState[] = [];
-  let nextListResult: { data: unknown; error: unknown } = { data: [], error: null };
-  let nextSingleResult: { data: unknown; error: unknown } | null = null;
+  const responseQueueByTable = new Map<string, MockedResponse[]>();
+
+  function dequeue(table: string): MockedResponse {
+    const q = responseQueueByTable.get(table);
+    if (!q || q.length === 0) return { data: null, error: null };
+    return q.shift() ?? { data: null, error: null };
+  }
 
   function makeChain(table: string): {
     chain: Record<string, unknown>;
     state: ChainState;
   } {
-    const state: ChainState = {
-      table,
-      ops: [],
-      result: nextListResult,
-      singleResult: nextSingleResult,
-    };
-
-    // The chain proxy supports `await chain` (PromiseLike) for list
-    // queries, and explicit `.maybeSingle()` for single-row reads.
+    const state: ChainState = { table, ops: [] };
     const chain: Record<string, unknown> = {};
     const record = (op: string) =>
       (...args: unknown[]) => {
         state.ops.push({ op, args });
         return chain;
       };
-    for (const op of ['select', 'eq', 'order', 'range', 'or']) {
+    for (const op of ['select', 'eq', 'order', 'limit', 'range']) {
       chain[op] = record(op);
     }
     chain.maybeSingle = () => {
       state.ops.push({ op: 'maybeSingle', args: [] });
-      return Promise.resolve(state.singleResult ?? state.result);
+      return Promise.resolve(dequeue(table));
     };
     chain.then = (
       onFulfilled?: (v: unknown) => unknown,
       onRejected?: (e: unknown) => unknown,
-    ) => Promise.resolve(state.result).then(onFulfilled, onRejected);
-
+    ) => Promise.resolve(dequeue(table)).then(onFulfilled, onRejected);
     return { chain, state };
   }
 
@@ -73,16 +77,14 @@ function makeStubSupabase() {
   return {
     client,
     calls,
-    mockListResult(data: unknown, error: unknown = null) {
-      nextListResult = { data, error };
-    },
-    mockSingleResult(data: unknown, error: unknown = null) {
-      nextSingleResult = { data, error };
+    queueResponse(table: string, response: MockedResponse) {
+      const q = responseQueueByTable.get(table) ?? [];
+      q.push(response);
+      responseQueueByTable.set(table, q);
     },
     reset() {
       calls.length = 0;
-      nextListResult = { data: [], error: null };
-      nextSingleResult = null;
+      responseQueueByTable.clear();
     },
   };
 }
@@ -98,6 +100,7 @@ function makeApp(supabase: ReturnType<typeof makeStubSupabase>) {
 }
 
 const SAMPLE_UUID = '11111111-1111-4111-8111-111111111111';
+const SITE_UUID = '22222222-2222-4222-8222-222222222222';
 
 describe('daily-briefing public routes', () => {
   let supabase: ReturnType<typeof makeStubSupabase>;
@@ -109,167 +112,124 @@ describe('daily-briefing public routes', () => {
   });
 
   describe('GET /api/daily-briefing', () => {
-    it('returns the list envelope with default limit/offset', async () => {
-      const rows = [
-        {
-          id: 'i1',
-          title: 'A',
-          summary: 'A summary',
-          brief_date: '2026-04-24',
-          source_label: 'X',
-          source_href: 'https://x.com',
-          is_pinned: false,
-        },
+    it('returns the most-recent published day with its items capped at 3', async () => {
+      const day = {
+        id: SAMPLE_UUID,
+        site_id: SITE_UUID,
+        brief_date: '2026-05-14',
+        image_cdn_url: 'https://example.com/cover.png',
+        image_generated_at: '2026-05-14T10:00:00Z',
+      };
+      const items = [
+        { id: 'i1', title: 'A', summary: 'a s', source_label: 'X', source_href: 'https://x', display_order: 1000 },
+        { id: 'i2', title: 'B', summary: 'b s', source_label: 'Y', source_href: 'https://y', display_order: 2000 },
+        { id: 'i3', title: 'C', summary: 'c s', source_label: 'Z', source_href: 'https://z', display_order: 3000 },
       ];
-      supabase.mockListResult(rows);
+      supabase.queueResponse('daily_briefing_days', { data: day, error: null });
+      supabase.queueResponse('daily_briefing_items', { data: items, error: null });
 
       const res = await request(app).get('/api/daily-briefing');
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({ items: rows, limit: 20, offset: 0 });
+      expect(res.body).toEqual({
+        day: {
+          id: day.id,
+          brief_date: day.brief_date,
+          image_cdn_url: day.image_cdn_url,
+          image_generated_at: day.image_generated_at,
+        },
+        items,
+      });
       expect(res.headers['cache-control']).toContain('max-age=60');
       expect(res.headers['cache-control']).toContain('stale-if-error=86400');
-      expect(res.headers['surrogate-key']).toBe('daily-briefing');
+      expect(res.headers['surrogate-key']).toBe(
+        `daily-briefing daily-briefing:day:${day.brief_date}`,
+      );
       expect(res.headers['etag']).toMatch(/^W\/"[0-9a-f]{16}"$/);
 
-      const state = supabase.calls[0];
-      expect(state.table).toBe('daily_briefing_items');
-      const eqOps = state.ops.filter((o) => o.op === 'eq');
-      expect(eqOps).toContainEqual({ op: 'eq', args: ['status', 'published'] });
-      // Sort order: pinned first, then brief_date desc, then created_at desc.
-      const orderOps = state.ops.filter((o) => o.op === 'order');
-      expect(orderOps[0]?.args[0]).toBe('is_pinned');
-      expect(orderOps[1]?.args[0]).toBe('brief_date');
-      expect(orderOps[2]?.args[0]).toBe('created_at');
+      // The day query MUST filter status='published' and order brief_date desc.
+      const dayState = supabase.calls.find((c) => c.table === 'daily_briefing_days');
+      expect(dayState).toBeDefined();
+      const dayEqs = dayState!.ops.filter((o) => o.op === 'eq');
+      expect(dayEqs).toContainEqual({ op: 'eq', args: ['status', 'published'] });
+      const dayOrders = dayState!.ops.filter((o) => o.op === 'order');
+      expect(dayOrders[0]?.args[0]).toBe('brief_date');
+      const dayLimits = dayState!.ops.filter((o) => o.op === 'limit');
+      expect(dayLimits[0]?.args).toEqual([1]);
+
+      // The items query MUST filter by day_id + status='published', order by
+      // display_order ASC, limit to 3.
+      const itemsState = supabase.calls.find((c) => c.table === 'daily_briefing_items');
+      expect(itemsState).toBeDefined();
+      const itemEqs = itemsState!.ops.filter((o) => o.op === 'eq');
+      expect(itemEqs).toContainEqual({ op: 'eq', args: ['day_id', day.id] });
+      expect(itemEqs).toContainEqual({ op: 'eq', args: ['status', 'published'] });
+      const itemLimits = itemsState!.ops.filter((o) => o.op === 'limit');
+      expect(itemLimits[0]?.args).toEqual([3]);
+      const itemOrders = itemsState!.ops.filter((o) => o.op === 'order');
+      expect(itemOrders[0]?.args[0]).toBe('display_order');
+      expect(itemOrders[0]?.args[1]).toEqual({ ascending: true });
     });
 
-    it('clamps an oversized limit to 100', async () => {
-      supabase.mockListResult([]);
-      const res = await request(app).get('/api/daily-briefing?limit=9999');
+    it('returns { day: null, items: [] } when no published day exists', async () => {
+      supabase.queueResponse('daily_briefing_days', { data: null, error: null });
+
+      const res = await request(app).get('/api/daily-briefing');
+
       expect(res.status).toBe(200);
-      expect(res.body.limit).toBe(100);
-      const rangeOp = supabase.calls[0].ops.find((o) => o.op === 'range');
-      expect(rangeOp?.args).toEqual([0, 99]);
+      expect(res.body).toEqual({ day: null, items: [] });
+      // Empty envelope still gets cached so the empty-state doesn't
+      // hammer the origin between authoring sessions.
+      expect(res.headers['cache-control']).toContain('max-age=60');
+      expect(res.headers['surrogate-key']).toBe('daily-briefing');
     });
 
-    it('honours limit=3 (theme home-page query)', async () => {
-      supabase.mockListResult([]);
-      const res = await request(app).get('/api/daily-briefing?limit=3');
-      expect(res.status).toBe(200);
-      expect(res.body.limit).toBe(3);
-      const rangeOp = supabase.calls[0].ops.find((o) => o.op === 'range');
-      expect(rangeOp?.args).toEqual([0, 2]);
-    });
-
-    it('filters by pinned=true', async () => {
-      supabase.mockListResult([]);
-      await request(app).get('/api/daily-briefing?pinned=true');
-      const eqOps = supabase.calls[0].ops.filter((o) => o.op === 'eq');
-      expect(eqOps).toContainEqual({ op: 'eq', args: ['is_pinned', true] });
-    });
-
-    it('filters by site_id when valid', async () => {
-      supabase.mockListResult([]);
-      await request(app).get(`/api/daily-briefing?site_id=${SAMPLE_UUID}`);
-      const eqOps = supabase.calls[0].ops.filter((o) => o.op === 'eq');
-      expect(eqOps).toContainEqual({ op: 'eq', args: ['site_id', SAMPLE_UUID] });
+    it('filters by site_id when supplied', async () => {
+      supabase.queueResponse('daily_briefing_days', { data: null, error: null });
+      await request(app).get(`/api/daily-briefing?site_id=${SITE_UUID}`);
+      const dayState = supabase.calls.find((c) => c.table === 'daily_briefing_days');
+      const eqs = dayState!.ops.filter((o) => o.op === 'eq');
+      expect(eqs).toContainEqual({ op: 'eq', args: ['site_id', SITE_UUID] });
     });
 
     it('rejects a non-uuid site_id with 400', async () => {
       const res = await request(app).get('/api/daily-briefing?site_id=not-a-uuid');
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('bad_request');
-    });
-
-    it('sanitises PostgREST `.or()` injection in search', async () => {
-      supabase.mockListResult([]);
-      await request(app).get(
-        '/api/daily-briefing?search=' + encodeURIComponent('lf,id.gt.0(*\\)'),
-      );
-      const orOp = supabase.calls[0].ops.find((o) => o.op === 'or');
-      const arg = orOp?.args[0] as string | undefined;
-      expect(arg).toBeDefined();
-      expect(arg).toContain('%lfid.gt.0%');
-      expect(arg).not.toContain('%lf,');
-      expect(arg).not.toContain('(*');
-      expect(arg).not.toContain('\\)');
-    });
-
-    it('surfaces a 500 when the supabase call errors', async () => {
-      supabase.mockListResult(null, { message: 'boom' });
-      const res = await request(app).get('/api/daily-briefing');
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('internal');
-    });
-  });
-
-  describe('GET /api/daily-briefing/:id', () => {
-    it('returns the single row', async () => {
-      const row = {
-        id: SAMPLE_UUID,
-        title: 'Hello',
-        summary: 'World',
-        brief_date: '2026-04-24',
-        source_label: 'X',
-        source_href: 'https://x.com',
-        is_pinned: false,
-      };
-      supabase.mockSingleResult(row);
-
-      const res = await request(app).get(`/api/daily-briefing/${SAMPLE_UUID}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual(row);
-      expect(res.headers['cache-control']).toContain('max-age=60');
-      expect(res.headers['surrogate-key']).toBe(
-        `daily-briefing daily-briefing:${SAMPLE_UUID}`,
-      );
-      expect(res.headers['etag']).toMatch(/^W\/"[0-9a-f]{16}"$/);
-
-      const eqOps = supabase.calls[0].ops.filter((o) => o.op === 'eq');
-      expect(eqOps).toContainEqual({ op: 'eq', args: ['id', SAMPLE_UUID] });
-      expect(eqOps).toContainEqual({ op: 'eq', args: ['status', 'published'] });
-    });
-
-    it('returns 404 when the row is missing', async () => {
-      supabase.mockSingleResult(null);
-      const res = await request(app).get(`/api/daily-briefing/${SAMPLE_UUID}`);
-      expect(res.status).toBe(404);
-      expect(res.body.error).toBe('not_found');
-    });
-
-    it('returns 404 for ids that fail the uuid regex (no DB call)', async () => {
-      const res = await request(app).get('/api/daily-briefing/bad-id');
-      expect(res.status).toBe(404);
       expect(supabase.calls).toHaveLength(0);
     });
 
-    it('surfaces a 500 when the supabase call errors', async () => {
-      supabase.mockSingleResult(null, { message: 'db dead' });
-      const res = await request(app).get(`/api/daily-briefing/${SAMPLE_UUID}`);
+    it('surfaces a 500 when the day query errors', async () => {
+      supabase.queueResponse('daily_briefing_days', {
+        data: null,
+        error: { message: 'boom' },
+      });
+      const res = await request(app).get('/api/daily-briefing');
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('internal');
     });
 
     it('returns 304 when If-None-Match matches the computed ETag', async () => {
-      const row = {
+      const day = {
         id: SAMPLE_UUID,
-        title: 'Hello',
-        summary: 'World',
-        brief_date: '2026-04-24',
-        source_label: 'X',
-        source_href: 'https://x.com',
-        is_pinned: false,
+        site_id: SITE_UUID,
+        brief_date: '2026-05-14',
+        image_cdn_url: null,
+        image_generated_at: null,
       };
-      supabase.mockSingleResult(row);
-      const first = await request(app).get(`/api/daily-briefing/${SAMPLE_UUID}`);
+      supabase.queueResponse('daily_briefing_days', { data: day, error: null });
+      supabase.queueResponse('daily_briefing_items', { data: [], error: null });
+      const first = await request(app).get('/api/daily-briefing');
       expect(first.status).toBe(200);
       const etag = first.headers['etag'];
       expect(etag).toBeDefined();
 
-      supabase.mockSingleResult(row);
+      // Reset stub queue + re-arm so the second call gets identical
+      // payload (deterministic ETag).
+      supabase.queueResponse('daily_briefing_days', { data: day, error: null });
+      supabase.queueResponse('daily_briefing_items', { data: [], error: null });
       const second = await request(app)
-        .get(`/api/daily-briefing/${SAMPLE_UUID}`)
+        .get('/api/daily-briefing')
         .set('If-None-Match', etag);
       expect(second.status).toBe(304);
       expect(second.text).toBe('');
