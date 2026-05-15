@@ -247,7 +247,20 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       );
       return;
     }
-    res.status(201).json(result.data);
+    const newDay = result.data as { id: string; site_id: string; brief_date: string };
+    // Fire-and-forget the research autopilot on freshly-created days
+    // (when wired). The HTTP response returns immediately; the chat
+    // panel polls the thread status until it flips from running →
+    // ready so the operator sees the candidates without refreshing.
+    if (deps.runResearch) {
+      void kickoffAutopilotForNewDay({
+        supabase,
+        logger,
+        runResearch: deps.runResearch,
+        day: newDay,
+      });
+    }
+    res.status(201).json(newDay);
   }
 
   async function patchDay(req: Request, res: Response): Promise<void> {
@@ -342,15 +355,16 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       return;
     }
 
-    // Cap stories at MAX_STORIES_PER_COVER so the prompt asks for a
-    // bounded number of panels — the prompt's panel-count instruction
-    // mirrors items.length, so feeding 20 rows would either bloat the
-    // composition or invite Gemini to ignore some. Top-N by drag-drop
-    // order matches operator intent.
+    // Only PUBLISHED items feed the image — the cover should reflect
+    // what readers actually see on the front page, not editorial drafts
+    // mid-write. Cap at MAX_STORIES_PER_COVER so the prompt's panel-
+    // count instruction stays bounded. Top-N by drag-drop order matches
+    // operator intent.
     const itemsRes = await supabase
       .from('daily_briefing_items')
       .select('title, summary, source_label')
       .eq('day_id', id)
+      .eq('status', 'published')
       .order('display_order', { ascending: true })
       .limit(MAX_STORIES_PER_COVER);
     const items = (itemsRes.data ?? []) as Array<{
@@ -905,8 +919,117 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
 
 // ─── Research helpers (module-private) ────────────────────────────────────
 
+/**
+ * Fire-and-forget research kickoff on day creation. Mirrors what the
+ * weekday-autopilot cron does for auto-created days but runs in the
+ * background after a manual create — so the operator's "New day"
+ * action populates the chat panel without an explicit "Run autopilot"
+ * click.
+ *
+ * Failures are logged but never surface to the client (the day was
+ * already created successfully). The thread row carries the failure
+ * state via status='failed' + last_error so the UI can show a retry
+ * affordance.
+ */
+async function kickoffAutopilotForNewDay(args: {
+  supabase: SupabaseClient;
+  logger: AdminDailyBriefingRoutesDeps['logger'];
+  runResearch: NonNullable<AdminDailyBriefingRoutesDeps['runResearch']>;
+  day: { id: string; site_id: string; brief_date: string };
+}): Promise<void> {
+  const { supabase, logger, runResearch, day } = args;
+  try {
+    // Reuse ensureThread so a concurrent operator click + auto-kickoff
+    // both resolve to the same row.
+    const thread = await ensureThread(supabase, day.id);
+    if ('error' in thread) {
+      logger.warn('daily-briefing.research.kickoff.thread_create_failed', {
+        day_id: day.id,
+        error: thread.error,
+      });
+      return;
+    }
+    // If anything is already in flight for this day (operator clicked
+    // before the auto-kickoff fired, or the cron beat us), bail.
+    if (thread.value.status === 'running') {
+      return;
+    }
+    await supabase
+      .from('daily_briefing_research_threads')
+      .update({ status: 'running', last_error: null })
+      .eq('id', thread.value.id);
+
+    // Recent dedup list.
+    const recentDays = await supabase
+      .from('daily_briefing_days')
+      .select('id')
+      .eq('site_id', day.site_id)
+      .eq('status', 'published')
+      .order('brief_date', { ascending: false })
+      .limit(7);
+    const dayIds = ((recentDays.data ?? []) as Array<{ id: string }>).map((d) => d.id);
+    let alreadyPublished: string[] = [];
+    if (dayIds.length > 0) {
+      const items = await supabase.from('daily_briefing_items').select('title');
+      alreadyPublished = ((items.data ?? []) as Array<{ title: string }>).map((r) => r.title);
+    }
+
+    const result = await runResearch({
+      briefDate: day.brief_date,
+      history: [],
+      message: '',
+      alreadyPublished,
+    });
+
+    await supabase
+      .from('daily_briefing_research_messages')
+      .insert({
+        thread_id: thread.value.id,
+        role: 'assistant',
+        content: result.narrative,
+        candidates: result.candidates,
+      });
+    await supabase
+      .from('daily_briefing_research_threads')
+      .update({
+        status: 'ready',
+        last_error: null,
+        input_tokens: (thread.value.input_tokens ?? 0) + result.inputTokens,
+        output_tokens: (thread.value.output_tokens ?? 0) + result.outputTokens,
+      })
+      .eq('id', thread.value.id);
+
+    logger.info('daily-briefing.research.kickoff.complete', {
+      day_id: day.id,
+      candidates: result.candidates.length,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.warn('daily-briefing.research.kickoff.failed', {
+      day_id: day.id,
+      error: message,
+    });
+    // Mark the thread failed (best-effort; ignore secondary failures).
+    await supabase
+      .from('daily_briefing_research_threads')
+      .update({ status: 'failed', last_error: message })
+      .eq('day_id', day.id)
+      .then(() => undefined, () => undefined);
+  }
+}
+
+
 type SupabaseClient = AdminDailyBriefingRoutesDeps['supabase'];
 
+/**
+ * Look up the thread for a day, creating it on first read. Tolerant
+ * of a concurrent insert losing the unique-constraint race — when the
+ * client mounts twice (React strict-mode dev double-effect, two
+ * browser tabs, etc.) both GETs hit ensureThread with empty `select`
+ * results; one INSERT wins, the other hits
+ * `daily_briefing_research_threads_day_unique` and we re-SELECT to
+ * return the row the winner just created.
+ */
 async function ensureThread(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient,
@@ -924,10 +1047,26 @@ async function ensureThread(
     .insert({ day_id: dayId, status: 'idle' })
     .select('*')
     .maybeSingle();
-  if (created.error || !created.data) {
-    return { error: created.error?.message ?? 'failed to create thread' };
+  if (!created.error && created.data) {
+    return { value: created.data as ThreadRow };
   }
-  return { value: created.data as ThreadRow };
+  // Unique-constraint race: a parallel call already inserted; re-fetch.
+  const errMsg = String(created.error?.message ?? '');
+  if (
+    errMsg.includes('daily_briefing_research_threads_day_unique') ||
+    errMsg.includes('duplicate key')
+  ) {
+    const refetch = await supabase
+      .from('daily_briefing_research_threads')
+      .select('*')
+      .eq('day_id', dayId)
+      .maybeSingle();
+    if (!refetch.error && refetch.data) {
+      return { value: refetch.data as ThreadRow };
+    }
+    return { error: refetch.error?.message ?? 'lost race + row not found' };
+  }
+  return { error: created.error?.message ?? 'failed to create thread' };
 }
 
 async function loadMessages(

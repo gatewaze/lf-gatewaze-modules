@@ -66,6 +66,25 @@ export default function ResearchPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayId]);
 
+  // Poll while a background research run is in flight (auto-kickoff on
+  // day creation, weekday cron). Once the runner persists the assistant
+  // turn it flips status to 'ready' and we stop polling.
+  useEffect(() => {
+    if (thread?.status !== 'running') return;
+    const tick = async () => {
+      try {
+        const result = await getResearchThread(dayId);
+        setThread(result.thread);
+        setMessages(result.messages);
+      } catch (err) {
+        console.error('[daily-briefing] poll research thread failed', err);
+      }
+    };
+    const interval = setInterval(() => void tick(), 4_000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayId, thread?.status]);
+
   useEffect(() => {
     // Auto-scroll to bottom on new messages so the latest assistant
     // turn is visible without manual scroll.
@@ -152,7 +171,8 @@ export default function ResearchPanel({
   }
 
   const hasMessages = messages.length > 0;
-  const isRunningStatus = thread?.status === 'running' || sending;
+  const backgroundRunning = thread?.status === 'running';
+  const isRunningStatus = backgroundRunning || sending;
 
   return (
     <div className="rounded-md border bg-neutral-50/60">
@@ -172,9 +192,15 @@ export default function ResearchPanel({
               last run failed
             </span>
           )}
+          {backgroundRunning && (
+            <span className="text-xs text-amber-700 inline-flex items-center gap-1">
+              <ArrowPathIcon className="size-4 animate-spin" />
+              researching…
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
-          {!hasMessages && !sending && (
+          {!hasMessages && !sending && !backgroundRunning && (
             <Button
               size="sm"
               variant="ghost"
@@ -203,10 +229,16 @@ export default function ResearchPanel({
         ref={transcriptRef}
         className="px-3 py-3 space-y-3 max-h-[480px] overflow-y-auto"
       >
-        {!hasMessages && !sending && (
+        {!hasMessages && !sending && !backgroundRunning && (
           <div className="text-sm text-neutral-500 text-center py-6">
             No research yet. Click <strong>Run autopilot</strong> to start a search,
             or send a custom prompt below.
+          </div>
+        )}
+        {!hasMessages && backgroundRunning && (
+          <div className="text-sm text-neutral-500 text-center py-6 inline-flex items-center gap-2 justify-center w-full">
+            <ArrowPathIcon className="size-4 animate-spin" />
+            Autopilot is researching the past 24 hours… this usually takes 30–90 seconds.
           </div>
         )}
 
@@ -244,9 +276,13 @@ export default function ResearchPanel({
             className="form-input flex-1 text-sm"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={sending}
+            disabled={sending || backgroundRunning}
           />
-          <Button type="submit" size="sm" disabled={sending || !input.trim()}>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={sending || backgroundRunning || !input.trim()}
+          >
             <PaperAirplaneIcon className="size-4 mr-1" />
             Send
           </Button>

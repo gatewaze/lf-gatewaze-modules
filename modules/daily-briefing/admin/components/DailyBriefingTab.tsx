@@ -566,7 +566,7 @@ export default function DailyBriefingTab() {
       )}
 
       <ConfirmModal
-        show={Boolean(deletingItem)}
+        isOpen={Boolean(deletingItem)}
         onClose={() => setDeletingItem(null)}
         onConfirm={handleDeleteItem}
         title="Delete story"
@@ -574,10 +574,10 @@ export default function DailyBriefingTab() {
           deletingItem ? `Permanently delete "${deletingItem.title}"?` : ''
         }
         confirmText="Delete"
-        confirmVariant="danger"
+        confirmColor="red"
       />
       <ConfirmModal
-        show={Boolean(deletingDay)}
+        isOpen={Boolean(deletingDay)}
         onClose={() => setDeletingDay(null)}
         onConfirm={handleDeleteDay}
         title="Delete day"
@@ -587,7 +587,7 @@ export default function DailyBriefingTab() {
             : ''
         }
         confirmText="Delete day"
-        confirmVariant="danger"
+        confirmColor="red"
       />
     </div>
   );
@@ -688,9 +688,9 @@ function DaySection({
             title={day.status === 'published' ? 'Unpublish day' : 'Publish day'}
           >
             {day.status === 'published' ? (
-              <EyeSlashIcon className="size-4" />
-            ) : (
               <EyeIcon className="size-4" />
+            ) : (
+              <EyeSlashIcon className="size-4" />
             )}
           </Button>
           <Button variant="ghost" size="sm" onClick={onEditDay} title="Edit day">
@@ -816,9 +816,9 @@ function SortableItemRow({
           title={item.status === 'published' ? 'Unpublish' : 'Publish'}
         >
           {item.status === 'published' ? (
-            <EyeSlashIcon className="size-4" />
-          ) : (
             <EyeIcon className="size-4" />
+          ) : (
+            <EyeSlashIcon className="size-4" />
           )}
         </Button>
         <Button variant="ghost" size="sm" onClick={onEdit} title="Edit">
