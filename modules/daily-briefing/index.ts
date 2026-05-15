@@ -22,20 +22,26 @@ const dailyBriefingModule: GatewazeModule = {
     'migrations/005_research_threads.sql',
   ],
 
-  // TODO(daily-briefing): wire the weekday autopilot cron once the
-  // research-runner + worker handler land. Planned shape:
-  //   crons: [{
-  //     name: 'daily-briefing.weekday-autopilot',
-  //     queue: 'jobs',
-  //     schedule: { pattern: '0 4 * * 1-5', tz: 'UTC' },
-  //     data: { kind: 'daily-briefing.weekday-autopilot' },
-  //   }],
-  //   workers: [{
-  //     name: 'daily-briefing.weekday-autopilot',
-  //     handler: 'workers/weekday-autopilot.ts',
-  //   }],
-  // Declaring the cron without a handler crashes the scheduler at boot,
-  // so the wiring lands together with the handler.
+  // Weekday autopilot — every weekday at 04:00 UTC (midnight US East /
+  // 21:00 US Pacific), provision today's day (if not already created)
+  // and run the AI research pass against it so the chat panel is
+  // pre-populated when an operator arrives. Skips any site whose day
+  // already has items or a non-empty thread (we never overwrite
+  // operator work). See workers/weekday-autopilot.ts for the handler.
+  workers: [
+    {
+      name: 'daily-briefing.weekday-autopilot',
+      handler: './workers/weekday-autopilot.ts',
+    },
+  ],
+  crons: [
+    {
+      name: 'daily-briefing.weekday-autopilot',
+      queue: 'jobs',
+      schedule: { pattern: '0 4 * * 1-5', tz: 'UTC' },
+      data: { kind: 'daily-briefing.weekday-autopilot' },
+    },
+  ],
 
   apiRoutes: async (app: unknown) => {
     const { registerRoutes } = await import('./api/register-routes.js');
