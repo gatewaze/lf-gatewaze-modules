@@ -19,7 +19,23 @@ const dailyBriefingModule: GatewazeModule = {
     'migrations/002_webhook_topic.sql',
     'migrations/003_restructure_to_days.sql',
     'migrations/004_webhook_topics_days.sql',
+    'migrations/005_research_threads.sql',
   ],
+
+  // TODO(daily-briefing): wire the weekday autopilot cron once the
+  // research-runner + worker handler land. Planned shape:
+  //   crons: [{
+  //     name: 'daily-briefing.weekday-autopilot',
+  //     queue: 'jobs',
+  //     schedule: { pattern: '0 4 * * 1-5', tz: 'UTC' },
+  //     data: { kind: 'daily-briefing.weekday-autopilot' },
+  //   }],
+  //   workers: [{
+  //     name: 'daily-briefing.weekday-autopilot',
+  //     handler: 'workers/weekday-autopilot.ts',
+  //   }],
+  // Declaring the cron without a handler crashes the scheduler at boot,
+  // so the wiring lands together with the handler.
 
   apiRoutes: async (app: unknown) => {
     const { registerRoutes } = await import('./api/register-routes.js');
