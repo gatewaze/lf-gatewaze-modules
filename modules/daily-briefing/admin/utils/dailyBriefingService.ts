@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 
 export type DailyBriefingStatus = 'draft' | 'published' | 'archived';
 export type DailyBriefingImageStatus = 'idle' | 'generating' | 'ready' | 'failed';
+export type ResearchThreadStatus = 'idle' | 'running' | 'ready' | 'failed';
 
 export interface DailyBriefingDay {
   id: string;
@@ -31,6 +32,10 @@ export interface DailyBriefingDay {
   item_count: number;
   /** Hydrated by the admin list endpoint, NOT a column. */
   published_item_count: number;
+  /** Hydrated from daily_briefing_research_threads; null when no thread exists yet. */
+  research_status: ResearchThreadStatus | null;
+  /** Last error from the autopilot, if any. */
+  research_error: string | null;
 }
 
 export interface DailyBriefingItem {
@@ -215,8 +220,6 @@ export async function reorderDailyBriefingItems(
 }
 
 // ── Research autopilot ──────────────────────────────────────────────────────
-
-export type ResearchThreadStatus = 'idle' | 'running' | 'ready' | 'failed';
 
 export interface ResearchCandidate {
   title: string;

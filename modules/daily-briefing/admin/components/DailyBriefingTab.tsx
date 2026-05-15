@@ -98,6 +98,25 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Toggle-button label for the per-day Research autopilot pane. Cycles
+ * through three states so the operator can see autopilot progress
+ * without opening the chat:
+ *   - "Researching" while the background run is in flight
+ *   - "Hide research" when the panel is open
+ *   - "Research autopilot" otherwise
+ */
+function researchLabel(
+  day: Pick<DailyBriefingDay, 'research_status'>,
+  panelOpen: boolean,
+): string {
+  if (day.research_status === 'running') return 'Researching';
+  if (panelOpen) return 'Hide research';
+  if (day.research_status === 'ready') return 'View research';
+  if (day.research_status === 'failed') return 'Research failed — retry';
+  return 'Research autopilot';
+}
+
 const PUBLIC_LIMIT = 3;
 
 export default function DailyBriefingTab() {
@@ -118,6 +137,17 @@ export default function DailyBriefingTab() {
   useEffect(() => {
     void load();
   }, []);
+
+  // Poll the days list while any day's research is in flight so the
+  // toggle button flips from "Researching" → "View research" without
+  // an operator-initiated refresh. Stops as soon as nothing's running.
+  useEffect(() => {
+    const anyRunning = days.some((d) => d.research_status === 'running');
+    if (!anyRunning) return;
+    const interval = setInterval(() => void load(), 5_000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days.map((d) => d.research_status).join('|')]);
 
   async function load() {
     setLoading(true);
@@ -736,8 +766,12 @@ function DaySection({
             size="sm"
             onClick={() => setResearchOpen((v) => !v)}
           >
-            <SparklesIcon className="size-4 mr-1 text-amber-600" />
-            {researchOpen ? 'Hide research' : 'Research autopilot'}
+            {day.research_status === 'running' ? (
+              <ArrowPathIcon className="size-4 mr-1 text-amber-600 animate-spin" />
+            ) : (
+              <SparklesIcon className="size-4 mr-1 text-amber-600" />
+            )}
+            {researchLabel(day, researchOpen)}
           </Button>
           <Button variant="ghost" size="sm" onClick={onAddItem}>
             <PlusIcon className="size-4 mr-1" />

@@ -206,10 +206,31 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       c.total += 1;
       if (row.status === 'published') c.published += 1;
     }
+
+    // Hydrate per-day research-thread status so the day-section toggle
+    // button can render "Researching" without opening the chat panel.
+    // A separate query (not a join) keeps the supabase-js surface narrow.
+    const threads = await supabase
+      .from('daily_briefing_research_threads')
+      .select('day_id, status, last_error');
+    const threadByDay = new Map<
+      string,
+      { status: string; last_error: string | null }
+    >();
+    for (const row of (threads.data ?? []) as Array<{
+      day_id: string;
+      status: string;
+      last_error: string | null;
+    }>) {
+      threadByDay.set(row.day_id, { status: row.status, last_error: row.last_error });
+    }
+
     const annotated = days.map((d) => ({
       ...d,
       item_count: byDay.get(d.id)?.total ?? 0,
       published_item_count: byDay.get(d.id)?.published ?? 0,
+      research_status: threadByDay.get(d.id)?.status ?? null,
+      research_error: threadByDay.get(d.id)?.last_error ?? null,
     }));
     res.status(200).json({ days: annotated });
   }
