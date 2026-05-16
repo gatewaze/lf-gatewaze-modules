@@ -1,30 +1,21 @@
 /**
- * Gemini image generation for daily-briefing day covers.
+ * Daily-briefing day cover image generation — bridged to
+ * @gatewaze-modules/ai per spec-ai-module.md Phase B.
  *
- * Calls Google's `gemini-2.5-flash-image` (the model commonly
- * referred to as "nano banana", now GA — the `-preview` suffix was
- * dropped when the model graduated) with the AAIF-branded newspaper-comic
- * prompt template, then uploads the resulting PNG to the host-media
- * Supabase Storage bucket. Returns the storage path + public CDN URL +
- * the exact prompt that was used (stored on the day row for audit).
+ * Previously called Gemini's REST API directly with the GEMINI_API_KEY
+ * env var. Now routed through the ai module's `aiGenerateImage`, which
+ * gives us cost tracking in ai_usage_events (tagged use_case=
+ * 'daily-briefing-cover'), per-use-case daily caps, and the same
+ * three-tier credential resolution as the rest of the platform.
  *
- * Why a dedicated file in this module, not editor-ai-copilot:
- *   editor-ai-copilot is the text/tool-use surface (Claude + GPT). The
- *   Gemini image API has a different shape and a different env key,
- *   and the daily-briefing prompt is brand-specific in a way that
- *   wouldn't survive a "generic image gen" abstraction. Cheaper to
- *   inline here than to design a shared surface no other caller yet
- *   needs.
+ * The brand-specific newspaper-comic prompt template stays here in
+ * gemini-prompt.ts — only the LLM call is delegated.
  */
 
 import { buildDailyBriefingImagePrompt } from './gemini-prompt.js';
 
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'gemini-2.5-flash-image';
-
-// Supabase Storage bucket — must match HOST_MEDIA_BUCKET on the platform
-// side. Fallback to 'media' matches host-media's own default.
 const STORAGE_BUCKET = process.env.HOST_MEDIA_BUCKET ?? 'media';
+const USE_CASE = 'daily-briefing-cover';
 
 export interface DailyBriefingStory {
   title: string;
@@ -45,21 +36,55 @@ export interface GenerateDayImageOpts {
 }
 
 export interface GenerateDayImageDeps {
-  apiKey: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
-  fetchImpl?: typeof fetch;
   /** Used by tests to make the filename deterministic. */
   now?: () => Date;
 }
 
-/**
- * Generate the day's cartoon cover, upload to storage, return the
- * persistable references. Throws on any failure so the caller can
- * mark image_status='failed' + capture the error.
- */
+// Lazy-import the ai module — same pattern as research-runner.ts.
+type AiGenerateImageFn = (
+  ctx: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: any;
+    logger?: { info(msg: string, meta?: Record<string, unknown>): void; warn(msg: string, meta?: Record<string, unknown>): void };
+  },
+  opts: {
+    useCase: string;
+    userId: string | null;
+    prompt: string;
+    model?: string;
+    aspectRatio?: '16:9' | '1:1' | '4:3' | '9:16';
+    destination: { bucket: string; path: string };
+    systemRun?: boolean;
+  },
+) => Promise<{ storagePath: string; mimeType: string; prompt: string; costMicroUsd: number; model: string; provider: string }>;
+
+let cachedAiGenerateImage: AiGenerateImageFn | null = null;
+async function getAiGenerateImage(): Promise<AiGenerateImageFn> {
+  if (cachedAiGenerateImage) return cachedAiGenerateImage;
+  const attempts = [
+    '@gatewaze-modules/ai/lib/runner.js',
+    '../../../../gatewaze-modules/modules/ai/lib/runner.ts',
+  ];
+  let lastErr: unknown;
+  for (const path of attempts) {
+    try {
+      const mod = (await import(path)) as { aiGenerateImage: AiGenerateImageFn };
+      cachedAiGenerateImage = mod.aiGenerateImage;
+      return cachedAiGenerateImage;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw new Error(
+    `daily-briefing gemini-image: failed to resolve @gatewaze-modules/ai/lib/runner. Last error: ${
+      lastErr instanceof Error ? lastErr.message : String(lastErr)
+    }`,
+  );
+}
+
 export function makeDayImageGenerator(deps: GenerateDayImageDeps) {
-  const fetchImpl = deps.fetchImpl ?? fetch;
   const now = deps.now ?? (() => new Date());
 
   return async function generateDayImage(
@@ -67,80 +92,24 @@ export function makeDayImageGenerator(deps: GenerateDayImageDeps) {
   ): Promise<GeneratedImage> {
     const prompt = buildDailyBriefingImagePrompt(opts.stories);
 
-    // 1. Call Gemini image API.
-    const url =
-      `${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(deps.apiKey)}`;
-    const requestBody = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseModalities: ['IMAGE'],
-        imageConfig: { aspectRatio: '16:9' },
-      },
-    };
-    const response = await fetchImpl(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    });
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      throw new Error(
-        `gemini API returned ${response.status}: ${text.slice(0, 500)}`,
-      );
-    }
-    const json = (await response.json()) as GeminiGenerateResponse;
-    const part = json.candidates?.[0]?.content?.parts?.find(
-      (p): p is GeminiInlineDataPart => Boolean(p.inline_data?.data) || Boolean(p.inlineData?.data),
-    );
-    // Gemini's v1beta JSON uses both `inline_data` (REST shape) and
-    // `inlineData` (TS SDK shape) depending on transport. Accept either.
-    const inlineData = part?.inline_data ?? part?.inlineData;
-    if (!inlineData?.data) {
-      const finishReason = json.candidates?.[0]?.finishReason ?? 'unknown';
-      throw new Error(
-        `gemini response contained no image data (finish_reason=${finishReason})`,
-      );
-    }
-    const mimeType = inlineData.mimeType ?? inlineData.mime_type ?? 'image/png';
-    const buffer = Buffer.from(inlineData.data, 'base64');
-
-    // 2. Upload to Supabase Storage via the same shape host-media uses:
-    //    <hostKind>/<hostId>/<mediaId>/<filename>
     const ts = now().toISOString().replace(/[:.]/g, '-');
-    const ext = mimeFromTypeToExt(mimeType);
-    const filename = `cover-${opts.briefDate}-${ts}.${ext}`;
     const mediaId = `cover-${ts}`;
+    const filename = `cover-${opts.briefDate}-${ts}.png`;
     const storagePath = `daily_briefing_day/${opts.dayId}/${mediaId}/${filename}`;
 
-    const { error } = await deps.supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(storagePath, buffer, {
-        contentType: mimeType,
-        upsert: false,
-      });
-    if (error) {
-      throw new Error(`storage upload failed: ${error.message}`);
-    }
+    const aiGenerateImage = await getAiGenerateImage();
+    const result = await aiGenerateImage(
+      { supabase: deps.supabase },
+      {
+        useCase: USE_CASE,
+        userId: null,
+        prompt,
+        aspectRatio: '16:9',
+        destination: { bucket: STORAGE_BUCKET, path: storagePath },
+        systemRun: true,
+      },
+    );
 
-    return { storage_path: storagePath, prompt };
+    return { storage_path: result.storagePath, prompt: result.prompt };
   };
-}
-
-function mimeFromTypeToExt(mime: string): string {
-  if (mime === 'image/png') return 'png';
-  if (mime === 'image/jpeg') return 'jpg';
-  if (mime === 'image/webp') return 'webp';
-  return 'bin';
-}
-
-interface GeminiInlineDataPart {
-  inline_data?: { data: string; mime_type?: string; mimeType?: string };
-  inlineData?: { data: string; mime_type?: string; mimeType?: string };
-}
-
-interface GeminiGenerateResponse {
-  candidates?: Array<{
-    content?: { parts?: GeminiInlineDataPart[] };
-    finishReason?: string;
-  }>;
 }

@@ -70,22 +70,12 @@ export function registerRoutes(app: Express): void {
   mountPublicDailyBriefingRoutes(publicRouter, publicRoutes);
   app.use('/api', publicRouter);
 
-  // Image-gen dependency. Optional — if GEMINI_API_KEY isn't set we
-  // pass `undefined` through and the admin endpoint returns 503 with a
-  // useful message rather than 500 on first invoke.
-  //
-  // We store only the relative storage_path on the row — consumers
-  // resolve to a full URL at read time via toPublicUrl(path, bucketUrl),
-  // matching the events / host-media pattern (see spec-relative-storage-paths.md).
-  const geminiApiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? '';
-  const generateDayImage = geminiApiKey
-    ? makeDayImageGenerator({ apiKey: geminiApiKey, supabase })
-    : undefined;
-  if (!geminiApiKey) {
-    logger.warn(
-      'GEMINI_API_KEY not set — daily-briefing image generation disabled (admin returns 503)',
-    );
-  }
+  // Image-gen — bridged through @gatewaze-modules/ai's aiGenerateImage.
+  // The ai module's credential router handles GEMINI_API_KEY resolution
+  // (via the daily-briefing-cover use-case credential pin or env), so
+  // the bridge here is unconditional; if the key is missing the admin
+  // endpoint surfaces a clean 503 from the ai module instead of a 500.
+  const generateDayImage = makeDayImageGenerator({ supabase });
 
   // Research autopilot — bridged through @gatewaze-modules/ai per
   // spec-ai-module.md Phase B. The new module's runChat handles
