@@ -322,7 +322,64 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       sendError(res, 400, 'bad_request', 'id (uuid) required');
       return;
     }
-    const result = await supabase.from('daily_briefing_days').delete().eq('id', id);
+
+    // Tear down children explicitly even though FK ON DELETE CASCADE
+    // would handle it. Two reasons:
+    //   1) Survives a future schema change that loses a CASCADE.
+    //   2) Per-table error logging makes "delete failed" diagnosable
+    //      from logs alone (which child blocked? RLS? FK from a table
+    //      we don't know about?).
+    // Each step is best-effort: a child-table delete error is logged
+    // but does not abort the whole flow, because the FK cascade will
+    // catch it on the final day delete anyway.
+    type DelResult = { error: { message?: string } | null };
+    const childDel = async (table: string, column: string): Promise<void> => {
+      const r = (await supabase.from(table).delete().eq(column, id)) as DelResult;
+      if (r.error) {
+        logger.warn('daily-briefing.admin.days.delete.child_error', {
+          id,
+          table,
+          column,
+          error: r.error.message,
+        });
+      }
+    };
+
+    // research_messages → research_threads → items → day
+    // (research_messages.thread_id FK + cascade make it a no-op when
+    // threads are gone, but listing it makes intent explicit.)
+    const threadsRes = (await supabase
+      .from('daily_briefing_research_threads')
+      .select('id')
+      .eq('day_id', id)) as { data: Array<{ id: string }> | null; error: { message?: string } | null };
+    if (threadsRes.error) {
+      logger.warn('daily-briefing.admin.days.delete.threads_lookup_error', {
+        id,
+        error: threadsRes.error.message,
+      });
+    }
+    const threadIds = (threadsRes.data ?? []).map((t) => t.id);
+    if (threadIds.length > 0) {
+      const r = (await supabase
+        .from('daily_briefing_research_messages')
+        .delete()
+        .in('thread_id', threadIds)) as DelResult;
+      if (r.error) {
+        logger.warn('daily-briefing.admin.days.delete.child_error', {
+          id,
+          table: 'daily_briefing_research_messages',
+          column: 'thread_id',
+          error: r.error.message,
+        });
+      }
+    }
+    await childDel('daily_briefing_research_threads', 'day_id');
+    await childDel('daily_briefing_items', 'day_id');
+
+    const result = (await supabase
+      .from('daily_briefing_days')
+      .delete()
+      .eq('id', id)) as DelResult;
     if (result.error) {
       logger.warn('daily-briefing.admin.days.delete.db_error', {
         error: result.error.message,
@@ -331,6 +388,7 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       sendError(res, 500, 'internal', String(result.error.message ?? ''));
       return;
     }
+    logger.info('daily-briefing.admin.days.deleted', { id });
     res.status(204).end();
   }
 

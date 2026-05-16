@@ -1,23 +1,17 @@
 /**
- * Daily-briefing AI research autopilot — server-side runner.
+ * Daily-briefing AI research autopilot — bridged to @gatewaze-modules/ai.
  *
- * Drives the multi-turn Claude conversation that surfaces candidate
- * agentic-AI stories for an operator to approve into a daily briefing.
+ * Previously this file orchestrated the Anthropic web-tools loop
+ * directly (via a dynamic import of editor-ai-copilot's
+ * runAnthropicWithWebTools). After spec-ai-module.md / Phase B, the
+ * runner is a thin wrapper around the new ai module's `runChat` —
+ * we get unified cost ledger writes, the use-case daily-cap gate, and
+ * the per-user credential resolution for free, while the daily-
+ * briefing-specific prompt template and candidate shape stay here.
  *
- * Architecture:
- *   - Re-uses `runAnthropicWithWebTools` from editor-ai-copilot to get
- *     the recursive fetch_url + web_search loop terminating on a
- *     structured-output tool. That loop is single-shot per call; we
- *     pack the conversation history into the user prompt so each
- *     refinement turn carries the prior context.
- *   - Fetches go through the internal scrapling-fetcher backend (same
- *     path the editor copilot uses for canvas fetches).
- *
- * The runner is exception-tolerant on the persistence side — failures
- * raise typed errors that the admin endpoint translates to HTTP. We
- * never write a partial assistant turn: if the model errors, the thread
- * status flips to 'failed' with `last_error` so the chat UI can surface
- * a retry button without rendering half-baked output.
+ * Key change: `ResearchRunnerDeps` now takes `supabase` instead of raw
+ * provider credentials. The old per-call API keys are resolved by the
+ * ai module's three-tier router (user → use_case → env).
  */
 
 import {
@@ -28,87 +22,91 @@ import {
   type ResearchHistoryTurn,
 } from './research-prompt.js';
 
-/**
- * Lazy import of editor-ai-copilot's anthropic+web-tools loop. The
- * package isn't on this module's runtime require-path until the
- * platform's module loader stitches the workspace together at install
- * time, so eager `import { runAnthropicWithWebTools }` crashes the
- * daily-briefing module at boot. Deferring to first-call lets the
- * module boot cleanly even on instances that don't have the copilot
- * installed; the admin endpoint catches the failure and returns 503.
- */
-type RunAnthropicWithWebToolsFn = (opts: {
-  apiKey: string;
-  model: string;
-  systemPrompt: string;
-  userPrompt: string;
-  structuredTool: { name: string; description: string; inputSchema: Record<string, unknown> };
-  maxOutputTokens: number;
-  timeoutMs: number;
-  webSearch?: { maxPerTurn: number };
-  fetchUrl?: {
-    maxPerTurn: number;
-    fetchOptions: Record<string, unknown>;
-  };
-}) => Promise<{
-  input: unknown;
+const USE_CASE = 'daily-briefing-research';
+const MAX_OUTPUT_TOKENS = 8_000;
+const TIMEOUT_MS = 120_000;
+
+// Lazy-import the ai module's runChat. Same pattern we used for
+// editor-ai-copilot before — the daily-briefing module's runtime
+// require-path doesn't resolve sibling modules eagerly, so import on
+// first use and surface a clean 503 from the admin endpoint when the
+// ai module isn't installed alongside.
+type RunChatFn = (
+  ctx: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: any;
+    resolveFetchUrl?: (url: string, reason: string) => Promise<{
+      ok: boolean;
+      content: string;
+      bytesIn: number;
+      finalUrl: string;
+      error?: string;
+    }>;
+    logger?: {
+      info(msg: string, meta?: Record<string, unknown>): void;
+      warn(msg: string, meta?: Record<string, unknown>): void;
+    };
+  },
+  opts: {
+    useCase: string;
+    userId: string | null;
+    threadId: string | null;
+    messageId: string | null;
+    systemPrompt: string;
+    messages: Array<{ role: 'user' | 'assistant' | 'system' | 'tool_result'; content: string }>;
+    provider?: 'auto' | 'anthropic' | 'openai' | 'gemini';
+    model?: string;
+    structuredTool?: { name: string; description: string; inputSchema: Record<string, unknown> };
+    systemRun?: boolean;
+    maxOutputTokens?: number;
+    timeoutMs?: number;
+  },
+) => Promise<{
+  narrative: string;
+  structured: Record<string, unknown> | null;
   inputTokens: number;
   outputTokens: number;
-  fetchedUrls: ReadonlyArray<{
-    url: string;
-    status: number;
-    byte_count: number;
-    error_code: string | null;
-  }>;
+  costMicroUsd: number;
+  fetchedUrls: ReadonlyArray<{ url: string; status: number; bytes_in: number; reason: string; fetched_at: string }>;
 }>;
 
-let cachedLoader: RunAnthropicWithWebToolsFn | null = null;
+let cachedRunChat: RunChatFn | null = null;
 
-async function getAnthropicLoop(): Promise<RunAnthropicWithWebToolsFn> {
-  if (cachedLoader) return cachedLoader;
-  // Try the package-named path first (works when editor-ai-copilot is
-  // resolvable as a workspace package), then fall back to a relative
-  // path that works when the platform mounts both module repos side-
-  // by-side under /lf-gatewaze-modules and /premium-gatewaze-modules.
+async function getRunChat(): Promise<RunChatFn> {
+  if (cachedRunChat) return cachedRunChat;
   const attempts = [
-    '@gatewaze-modules/editor-ai-copilot/lib/web-tools/anthropic-loop.js',
-    '../../../../premium-gatewaze-modules/modules/editor-ai-copilot/lib/web-tools/anthropic-loop.ts',
+    '@gatewaze-modules/ai/lib/runner.js',
+    '../../../../gatewaze-modules/modules/ai/lib/runner.ts',
   ];
   let lastErr: unknown;
   for (const path of attempts) {
     try {
-      const mod = (await import(path)) as {
-        runAnthropicWithWebTools: RunAnthropicWithWebToolsFn;
-      };
-      cachedLoader = mod.runAnthropicWithWebTools;
-      return cachedLoader;
+      const mod = (await import(path)) as { runChat: RunChatFn };
+      cachedRunChat = mod.runChat;
+      return cachedRunChat;
     } catch (err) {
       lastErr = err;
     }
   }
   throw new Error(
-    `daily-briefing research-runner: failed to resolve editor-ai-copilot's anthropic-loop module. Last error: ${
+    `daily-briefing research-runner: failed to resolve @gatewaze-modules/ai/lib/runner. Last error: ${
       lastErr instanceof Error ? lastErr.message : String(lastErr)
     }`,
   );
 }
 
-const DEFAULT_MODEL = 'claude-sonnet-4-5';
-const MAX_OUTPUT_TOKENS = 8_000;
-const TIMEOUT_MS = 120_000;
-const WEB_SEARCH_MAX_PER_TURN = 6;
-const FETCH_URL_MAX_PER_TURN = 8;
-const FETCH_MAX_BYTES = 200_000;
-
 export interface ResearchRunnerOpts {
-  /** ISO date the operator is researching. */
   briefDate: string;
-  /** Prior conversation turns within this thread (oldest first). */
   history: ResearchHistoryTurn[];
-  /** Operator's new message, or the autopilot kickoff text. */
   message: string;
-  /** Previously-published headlines from older days; the model dedups against these. */
   alreadyPublished?: string[];
+  /**
+   * Optional links to thread/message rows so the ai module's cost ledger
+   * can cross-reference back to the daily-briefing tables. Passed
+   * straight through to `runChat`.
+   */
+  threadId?: string | null;
+  messageId?: string | null;
 }
 
 export interface ResearchRunnerResult {
@@ -116,6 +114,7 @@ export interface ResearchRunnerResult {
   candidates: ResearchCandidate[];
   inputTokens: number;
   outputTokens: number;
+  costMicroUsd: number;
   fetchedUrls: ReadonlyArray<{
     url: string;
     status: number;
@@ -125,15 +124,25 @@ export interface ResearchRunnerResult {
 }
 
 export interface ResearchRunnerDeps {
-  anthropicApiKey: string;
-  scraplingFetcherUrl: string;
-  scraplingInternalToken: string;
-  model?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any;
+  resolveFetchUrl?: (url: string, reason: string) => Promise<{
+    ok: boolean;
+    content: string;
+    bytesIn: number;
+    finalUrl: string;
+    error?: string;
+  }>;
+  logger?: {
+    info(msg: string, meta?: Record<string, unknown>): void;
+    warn(msg: string, meta?: Record<string, unknown>): void;
+  };
 }
 
 /**
- * Build a research-runner function bound to the platform's credentials.
- * The returned function is called per chat turn.
+ * Build a research-runner bound to a supabase client. Every call routes
+ * through the ai module's `runChat` (which handles credentials, cost
+ * ledger writes, retries, and the per-use-case daily cap).
  */
 export function makeResearchRunner(deps: ResearchRunnerDeps) {
   return async function runResearch(
@@ -146,65 +155,52 @@ export function makeResearchRunner(deps: ResearchRunnerDeps) {
       latestUserMessage: opts.message,
     });
 
-    const runAnthropicWithWebTools = await getAnthropicLoop();
-    const result = await runAnthropicWithWebTools({
-      apiKey: deps.anthropicApiKey,
-      model: deps.model ?? DEFAULT_MODEL,
-      systemPrompt: RESEARCH_SYSTEM_PROMPT,
-      userPrompt,
-      structuredTool: {
-        name: 'submit_candidates',
-        description:
-          'Submit your final stack-ranked candidate list and a short narrative explanation. This terminates the turn.',
-        // The shared loop accepts a plain JSON schema object; cast through
-        // unknown so the local TS check doesn't try to over-narrow it.
-        inputSchema: SUBMIT_CANDIDATES_TOOL_SCHEMA as unknown as Record<string, unknown>,
-      },
-      maxOutputTokens: MAX_OUTPUT_TOKENS,
-      timeoutMs: TIMEOUT_MS,
-      webSearch: { maxPerTurn: WEB_SEARCH_MAX_PER_TURN },
-      fetchUrl: {
-        maxPerTurn: FETCH_URL_MAX_PER_TURN,
-        fetchOptions: {
-          backend: 'scrapling',
-          baseUrl: deps.scraplingFetcherUrl,
-          internalToken: deps.scraplingInternalToken,
-          mode: 'fast',
-          timeoutMs: 20_000,
-          maxBytes: FETCH_MAX_BYTES,
+    const runChat = await getRunChat();
+    const result = await runChat(
+      { supabase: deps.supabase, resolveFetchUrl: deps.resolveFetchUrl, logger: deps.logger },
+      {
+        useCase: USE_CASE,
+        userId: null,                         // system-run: cron + autopilot fire-and-forget
+        threadId: opts.threadId ?? null,
+        messageId: opts.messageId ?? null,
+        systemPrompt: RESEARCH_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }],
+        provider: 'anthropic',
+        structuredTool: {
+          name: 'submit_candidates',
+          description:
+            'Submit your final stack-ranked candidate list and a short narrative explanation. This terminates the turn.',
+          inputSchema: SUBMIT_CANDIDATES_TOOL_SCHEMA as unknown as Record<string, unknown>,
         },
+        systemRun: true,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
+        timeoutMs: TIMEOUT_MS,
       },
-    });
+    );
 
-    const parsed = parseStructuredOutput(result.input);
+    const parsed = parseStructuredOutput(result.structured);
     return {
-      narrative: parsed.narrative,
+      narrative: parsed.narrative || result.narrative,
       candidates: parsed.candidates,
       inputTokens: result.inputTokens,
       outputTokens: result.outputTokens,
+      costMicroUsd: result.costMicroUsd,
       fetchedUrls: result.fetchedUrls.map((f) => ({
         url: f.url,
         status: f.status,
-        byte_count: f.byte_count,
-        error_code: f.error_code,
+        byte_count: f.bytes_in,
+        error_code: null,
       })),
     };
   };
 }
 
-/**
- * The structured-output tool returns `{ narrative, candidates }` per
- * SUBMIT_CANDIDATES_TOOL_SCHEMA. The shared loop returns it typed as
- * `unknown`; narrow it here, throwing if the shape is wrong (the loop
- * already validated against the schema, but defence-in-depth + a clean
- * type narrow makes the downstream code simpler).
- */
 function parseStructuredOutput(raw: unknown): {
   narrative: string;
   candidates: ResearchCandidate[];
 } {
   if (!raw || typeof raw !== 'object') {
-    throw new Error('research_runner: structured output was not an object');
+    return { narrative: '', candidates: [] };
   }
   const obj = raw as Record<string, unknown>;
   const narrative = typeof obj.narrative === 'string' ? obj.narrative : '';

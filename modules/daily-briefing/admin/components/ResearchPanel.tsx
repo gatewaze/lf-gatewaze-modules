@@ -25,6 +25,7 @@ import {
   TrashIcon,
   SparklesIcon,
   ArrowTopRightOnSquareIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 
@@ -45,12 +46,15 @@ interface Props {
   briefDate: string;
   /** Called after an "Add to day" succeeds so the parent can re-render. */
   onCandidateApproved: () => void;
+  /** Hides the panel. Wired to the parent DaySection's `setResearchOpen(false)`. */
+  onClose: () => void;
 }
 
 export default function ResearchPanel({
   dayId,
   briefDate,
   onCandidateApproved,
+  onClose,
 }: Props) {
   const [thread, setThread] = useState<ResearchThread | null>(null);
   const [messages, setMessages] = useState<ResearchMessage[]>([]);
@@ -58,6 +62,13 @@ export default function ResearchPanel({
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [approvingKey, setApprovingKey] = useState<string | null>(null);
+  const [rejectingKey, setRejectingKey] = useState<string | null>(null);
+  // Keys (`${message.id}:${candidateIndex}`) of candidates the operator
+  // has rejected in this session. Greys out the card so the operator
+  // can see at a glance what's already been dismissed. Local-only —
+  // chat history is the server-side source of truth, this is just a UI
+  // breadcrumb for the current session.
+  const [rejectedKeys, setRejectedKeys] = useState<Set<string>>(() => new Set());
   const [resetting, setResetting] = useState(false);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
 
@@ -107,9 +118,14 @@ export default function ResearchPanel({
     }
   }
 
-  async function handleSend(message?: string) {
+  /**
+   * Returns true on success, false if the autopilot call failed. The
+   * reject flow uses this to decide whether to mark the candidate as
+   * greyed-out — we only flip the UI if the replacement actually ran.
+   */
+  async function handleSend(message?: string): Promise<boolean> {
     const text = (message ?? input).trim();
-    if (!text && messages.length > 0) return;
+    if (!text && messages.length > 0) return false;
     setSending(true);
     try {
       const result = await postResearchMessage(dayId, text || undefined);
@@ -120,11 +136,13 @@ export default function ResearchPanel({
       const full = await getResearchThread(dayId);
       setMessages(full.messages);
       setInput('');
+      return true;
     } catch (err) {
       console.error('[daily-briefing] send research message failed', err);
       toast.error(err instanceof Error ? err.message : 'Send failed');
       // Re-pull thread so a 'failed' status surfaces in the UI.
       await hydrate();
+      return false;
     } finally {
       setSending(false);
     }
@@ -142,6 +160,47 @@ export default function ResearchPanel({
       toast.error(err instanceof Error ? err.message : 'Add failed');
     } finally {
       setApprovingKey(null);
+    }
+  }
+
+  /**
+   * Reject a candidate and ask the model for a single replacement. The
+   * model already sees prior candidates via the message history; we also
+   * include an explicit "do not propose any of these" list built from
+   * every candidate ever surfaced in this thread to make the constraint
+   * hard (some models drop loose constraints under load). We send this
+   * as a regular user turn so it joins the same loop the composer uses.
+   */
+  async function handleReject(message: ResearchMessage, candidateIndex: number) {
+    const candidate = message.candidates?.[candidateIndex];
+    if (!candidate) return;
+    const allShownTitles = new Set<string>();
+    for (const m of messages) {
+      if (!m.candidates) continue;
+      for (const c of m.candidates) allShownTitles.add(c.title);
+    }
+    const avoidList = Array.from(allShownTitles)
+      .map((t) => `- ${t}`)
+      .join('\n');
+    const promptParts = [
+      `Reject the candidate titled "${candidate.title}".`,
+      'Find a single replacement that strengthens the daily lineup. Apply the same 24-hour gate and editorial bar as the original pass.',
+      'Do not propose any of these candidates already shown in this thread (rejected or accepted):',
+      avoidList,
+    ];
+    const key = `${message.id}:${candidateIndex}`;
+    setRejectingKey(key);
+    try {
+      const ok = await handleSend(promptParts.join('\n'));
+      if (ok) {
+        setRejectedKeys((prev) => {
+          const next = new Set(prev);
+          next.add(key);
+          return next;
+        });
+      }
+    } finally {
+      setRejectingKey(null);
     }
   }
 
@@ -222,6 +281,14 @@ export default function ResearchPanel({
               <TrashIcon className="size-4 text-red-600" />
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onClose}
+            title="Close research"
+          >
+            <XMarkIcon className="size-4" />
+          </Button>
         </div>
       </header>
 
@@ -251,6 +318,9 @@ export default function ResearchPanel({
               message={m}
               approvingKey={approvingKey}
               onApprove={(idx) => handleApprove(m, idx)}
+              rejectingKey={rejectingKey}
+              onReject={(idx) => void handleReject(m, idx)}
+              rejectedKeys={rejectedKeys}
             />
           ),
         )}
@@ -317,10 +387,16 @@ function AssistantMessage({
   message,
   approvingKey,
   onApprove,
+  rejectingKey,
+  onReject,
+  rejectedKeys,
 }: {
   message: ResearchMessage;
   approvingKey: string | null;
   onApprove: (candidateIndex: number) => void;
+  rejectingKey: string | null;
+  onReject: (candidateIndex: number) => void;
+  rejectedKeys: Set<string>;
 }) {
   const candidates = Array.isArray(message.candidates) ? message.candidates : [];
   return (
@@ -333,14 +409,20 @@ function AssistantMessage({
         )}
         {candidates.length > 0 && (
           <div className="space-y-2">
-            {candidates.map((c, idx) => (
-              <CandidateCard
-                key={`${message.id}:${idx}`}
-                candidate={c}
-                approving={approvingKey === `${message.id}:${idx}`}
-                onApprove={() => onApprove(idx)}
-              />
-            ))}
+            {candidates.map((c, idx) => {
+              const k = `${message.id}:${idx}`;
+              return (
+                <CandidateCard
+                  key={k}
+                  candidate={c}
+                  approving={approvingKey === k}
+                  onApprove={() => onApprove(idx)}
+                  rejecting={rejectingKey === k}
+                  onReject={() => onReject(idx)}
+                  rejected={rejectedKeys.has(k)}
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -352,14 +434,35 @@ function CandidateCard({
   candidate,
   approving,
   onApprove,
+  rejecting,
+  onReject,
+  rejected,
 }: {
   candidate: ResearchCandidate;
   approving: boolean;
   onApprove: () => void;
+  rejecting: boolean;
+  onReject: () => void;
+  rejected: boolean;
 }) {
+  const busy = approving || rejecting;
   return (
-    <div className="rounded-md border bg-white p-3 text-sm space-y-1.5">
-      <div className="font-medium">{candidate.title}</div>
+    <div
+      className={`rounded-md border p-3 text-sm space-y-1.5 transition-opacity ${
+        rejected ? 'bg-neutral-50 opacity-50' : 'bg-white'
+      }`}
+      aria-disabled={rejected}
+    >
+      <div className="flex items-center gap-2">
+        <div className={`font-medium ${rejected ? 'line-through' : ''}`}>
+          {candidate.title}
+        </div>
+        {rejected && (
+          <span className="text-xs uppercase tracking-wide text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
+            Rejected
+          </span>
+        )}
+      </div>
       <div className="text-neutral-700">{candidate.summary}</div>
       {candidate.why && (
         <div className="text-xs text-neutral-500 italic">
@@ -376,19 +479,44 @@ function CandidateCard({
           {candidate.source_label}
           <ArrowTopRightOnSquareIcon className="size-3" />
         </a>
-        <Button size="sm" onClick={onApprove} disabled={approving}>
-          {approving ? (
-            <>
-              <ArrowPathIcon className="size-4 animate-spin mr-1" />
-              Adding…
-            </>
-          ) : (
-            <>
-              <PlusCircleIcon className="size-4 mr-1" />
-              Add to day
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onReject}
+            disabled={busy || rejected}
+            title={
+              rejected
+                ? 'Already rejected'
+                : 'Reject this candidate and ask autopilot for a replacement'
+            }
+          >
+            {rejecting ? (
+              <>
+                <ArrowPathIcon className="size-4 animate-spin mr-1" />
+                Finding replacement…
+              </>
+            ) : (
+              <>
+                <XMarkIcon className="size-4 mr-1 text-red-600" />
+                Reject
+              </>
+            )}
+          </Button>
+          <Button size="sm" onClick={onApprove} disabled={busy || rejected}>
+            {approving ? (
+              <>
+                <ArrowPathIcon className="size-4 animate-spin mr-1" />
+                Adding…
+              </>
+            ) : (
+              <>
+                <PlusCircleIcon className="size-4 mr-1" />
+                Add to day
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -39,13 +39,16 @@ const RECENT_PUBLISHED_DAYS = 7;
 export async function runWeekdayAutopilot(deps: Deps): Promise<void> {
   const { supabase, logger } = deps;
 
-  const anthropicApiKey = process.env.ANTHROPIC_API_KEY ?? '';
+  // After spec-ai-module Phase B the cron runs through the new ai
+  // module's runChat — credentials, cost ledger, and the daily cap are
+  // all enforced there. We still wire scrapling-fetcher for the
+  // fetch_url tool but the cron can run (using web_search only) even
+  // when scrapling is unreachable.
   const scraplingFetcherUrl = process.env.SCRAPLING_FETCHER_URL ?? '';
   const scraplingInternalToken = process.env.SCRAPLING_INTERNAL_TOKEN ?? '';
-  if (!anthropicApiKey || !scraplingFetcherUrl || !scraplingInternalToken) {
-    logger.warn('[daily-briefing] weekday autopilot skipped: missing ANTHROPIC_API_KEY / SCRAPLING_FETCHER_URL / SCRAPLING_INTERNAL_TOKEN');
-    return;
-  }
+  const resolveFetchUrl = scraplingFetcherUrl && scraplingInternalToken
+    ? buildScraplingFetchResolver(scraplingFetcherUrl, scraplingInternalToken)
+    : undefined;
 
   // Find sites that have the daily-briefing module enabled. The
   // installed_modules row stores per-site flags via the `enabled_sites`
@@ -64,11 +67,7 @@ export async function runWeekdayAutopilot(deps: Deps): Promise<void> {
     return;
   }
 
-  const runResearch = makeResearchRunner({
-    anthropicApiKey,
-    scraplingFetcherUrl,
-    scraplingInternalToken,
-  });
+  const runResearch = makeResearchRunner({ supabase, resolveFetchUrl, logger });
 
   const briefDate = new Date().toISOString().slice(0, 10);
   logger.info('[daily-briefing] weekday autopilot: starting', {
@@ -275,4 +274,46 @@ export default async function handler(
 ): Promise<void> {
   if (payload.data?.kind !== 'daily-briefing.weekday-autopilot') return;
   await runWeekdayAutopilot(deps);
+}
+
+function buildScraplingFetchResolver(
+  baseUrl: string,
+  token: string,
+): (url: string, reason: string) => Promise<{
+  ok: boolean;
+  content: string;
+  bytesIn: number;
+  finalUrl: string;
+  error?: string;
+}> {
+  const MAX_BYTES = 200_000;
+  const TIMEOUT_MS = 20_000;
+  return async (url, reason) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const response = await fetch(`${baseUrl.replace(/\/$/, '')}/fetch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-internal-token': token },
+        body: JSON.stringify({ url, mode: 'fast', extract: ['html'], timeout_ms: TIMEOUT_MS - 1000 }),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        return { ok: false, content: '', bytesIn: 0, finalUrl: url, error: `upstream ${response.status}` };
+      }
+      const data = (await response.json()) as { data?: { html?: string; final_url?: string; bytes_in?: number } };
+      const html = data.data?.html ?? '';
+      const truncated = html.length > MAX_BYTES ? html.slice(0, MAX_BYTES) + '\n[…truncated]' : html;
+      return {
+        ok: true,
+        content: `<fetched_content url="${data.data?.final_url ?? url}" reason="${reason}">\n${truncated}\n</fetched_content>`,
+        bytesIn: data.data?.bytes_in ?? html.length,
+        finalUrl: data.data?.final_url ?? url,
+      };
+    } catch (err) {
+      return { ok: false, content: '', bytesIn: 0, finalUrl: url, error: err instanceof Error ? err.message : String(err) };
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 }

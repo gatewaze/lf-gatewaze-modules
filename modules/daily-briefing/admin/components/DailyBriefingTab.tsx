@@ -144,13 +144,22 @@ export default function DailyBriefingTab() {
   useEffect(() => {
     const anyRunning = days.some((d) => d.research_status === 'running');
     if (!anyRunning) return;
-    const interval = setInterval(() => void load(), 5_000);
+    const interval = setInterval(() => void load({ background: true }), 5_000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days.map((d) => d.research_status).join('|')]);
 
-  async function load() {
-    setLoading(true);
+  /**
+   * Fetch the days + items list.
+   *
+   * The full-page LoadingSpinner is only used on initial mount — refreshes
+   * keep the existing list rendered so transient per-day UI state (e.g.
+   * `researchOpen` inside DaySection) survives. Approval / delete /
+   * toggle flows all hit `load({ background: true })` so the research
+   * panel doesn't get yanked out from under the operator mid-action.
+   */
+  async function load(opts: { background?: boolean } = {}) {
+    if (!opts.background) setLoading(true);
     try {
       const site = await getDefaultSiteId();
       setSiteId(site);
@@ -163,7 +172,7 @@ export default function DailyBriefingTab() {
       console.error('[daily-briefing] load failed', err);
       toast.error('Failed to load daily briefing');
     } finally {
-      setLoading(false);
+      if (!opts.background) setLoading(false);
     }
   }
 
@@ -204,7 +213,7 @@ export default function DailyBriefingTab() {
         toast.success('Day created');
       }
       setDayDraft(null);
-      await load();
+      await load({ background: true });
     } catch (err) {
       console.error('[daily-briefing] save day failed', err);
       toast.error(err instanceof Error ? err.message : 'Save failed');
@@ -218,7 +227,7 @@ export default function DailyBriefingTab() {
       const next: DailyBriefingStatus = d.status === 'published' ? 'draft' : 'published';
       await updateDailyBriefingDay(d.id, { status: next });
       toast.success(next === 'published' ? 'Day published' : 'Day unpublished');
-      await load();
+      await load({ background: true });
     } catch (err) {
       console.error('[daily-briefing] toggle day publish failed', err);
       toast.error('Update failed');
@@ -231,7 +240,7 @@ export default function DailyBriefingTab() {
       await deleteDailyBriefingDay(deletingDay.id);
       toast.success('Day deleted');
       setDeletingDay(null);
-      await load();
+      await load({ background: true });
     } catch (err) {
       console.error('[daily-briefing] delete day failed', err);
       toast.error('Delete failed');
@@ -264,7 +273,7 @@ export default function DailyBriefingTab() {
       console.error('[daily-briefing] generate image failed', err);
       toast.error(err instanceof Error ? err.message : 'Image generation failed');
       // Reload to pick up the server's image_status='failed' + image_error.
-      await load();
+      await load({ background: true });
     } finally {
       setGeneratingDayId(null);
     }
@@ -325,7 +334,7 @@ export default function DailyBriefingTab() {
         toast.success('Story added');
       }
       setItemDraft(null);
-      await load();
+      await load({ background: true });
     } catch (err) {
       console.error('[daily-briefing] save item failed', err);
       toast.error(err instanceof Error ? err.message : 'Save failed');
@@ -338,7 +347,7 @@ export default function DailyBriefingTab() {
     try {
       const next: DailyBriefingStatus = item.status === 'published' ? 'draft' : 'published';
       await updateDailyBriefingItem(item.id, { status: next });
-      await load();
+      await load({ background: true });
     } catch (err) {
       console.error('[daily-briefing] toggle item publish failed', err);
       toast.error('Update failed');
@@ -351,7 +360,7 @@ export default function DailyBriefingTab() {
       await deleteDailyBriefingItem(deletingItem.id);
       toast.success('Story deleted');
       setDeletingItem(null);
-      await load();
+      await load({ background: true });
     } catch (err) {
       console.error('[daily-briefing] delete item failed', err);
       toast.error('Delete failed');
@@ -392,7 +401,7 @@ export default function DailyBriefingTab() {
     } catch (err) {
       console.error('[daily-briefing] reorder failed', err);
       toast.error('Reorder failed; reloading');
-      await load();
+      await load({ background: true });
     }
   }
 
@@ -444,7 +453,7 @@ export default function DailyBriefingTab() {
               onDeleteItem={setDeletingItem}
               onTogglePublishItem={toggleItemPublish}
               onDragEnd={(e) => handleDragEnd(day.id, e)}
-              onCandidateApproved={() => void load()}
+              onCandidateApproved={() => void load({ background: true })}
             />
           ))}
         </div>
@@ -785,6 +794,7 @@ function DaySection({
               dayId={day.id}
               briefDate={day.brief_date}
               onCandidateApproved={onCandidateApproved}
+              onClose={() => setResearchOpen(false)}
             />
           </div>
         )}
