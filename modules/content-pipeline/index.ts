@@ -2,6 +2,7 @@ import type { GatewazeModule } from '@gatewaze/shared';
 
 const contentPipelineModule: GatewazeModule = {
   id: 'content-pipeline',
+  group: 'content',
   type: 'feature',
   visibility: 'public',
   name: 'Content Pipeline',
@@ -144,18 +145,27 @@ const contentPipelineModule: GatewazeModule = {
   ],
 
   configSchema: {
+    // ── DEPRECATED ────────────────────────────────────────────────────
+    // After spec-ai-module §16 Phase G the future embedding code MUST
+    // call aiEmbed({ useCase: 'content-pipeline-embed', ... }) from
+    // @gatewaze-modules/ai/lib/runner. Credentials + cost + daily cap
+    // are managed by the ai module. The config schema entries below
+    // stay only because some operators have already populated them; new
+    // installs should leave them blank.
     openaiApiKey: {
       key: 'openaiApiKey',
       type: 'secret',
       required: false,
-      description: 'OpenAI API key for embeddings generation',
+      description:
+        'DEPRECATED. Configure via /admin/ai/credentials or env. The ai module resolves OpenAI keys through its three-tier router; this field is read by the legacy reconcile path only.',
     },
     defaultEmbeddingModel: {
       key: 'defaultEmbeddingModel',
       type: 'string',
       required: false,
       default: 'text-embedding-3-small',
-      description: 'Default embedding model for vector search',
+      description:
+        'DEPRECATED. The default model is now read from ai_use_cases.default_model for use_case=content-pipeline-embed.',
     },
     maxRetries: {
       key: 'maxRetries',
