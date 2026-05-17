@@ -48,7 +48,9 @@ import { Button, Modal, Badge } from '@/components/ui';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
-import ResearchPanel from './ResearchPanel';
+import { AiChatWidget } from '@gatewaze-modules/ai/admin';
+
+import CandidateCards from './CandidateCards';
 
 import {
   listDailyBriefingDays,
@@ -790,11 +792,20 @@ function DaySection({
 
         {researchOpen && (
           <div className="pt-3">
-            <ResearchPanel
-              dayId={day.id}
-              briefDate={day.brief_date}
-              onCandidateApproved={onCandidateApproved}
-              onClose={() => setResearchOpen(false)}
+            <AiChatWidget
+              useCase="daily-briefing-research"
+              hostKind="daily_briefing_day"
+              hostId={day.id}
+              defaultProvider="anthropic"
+              defaultModel="claude-sonnet-4-5"
+              modelPicker
+              renderAssistantTurn={(msg) => (
+                <CandidateCards
+                  dayId={day.id}
+                  message={msg}
+                  onApproved={onCandidateApproved}
+                />
+              )}
             />
           </div>
         )}

@@ -20,6 +20,7 @@ const dailyBriefingModule: GatewazeModule = {
     'migrations/003_restructure_to_days.sql',
     'migrations/004_webhook_topics_days.sql',
     'migrations/005_research_threads.sql',
+    'migrations/006_drop_legacy_research_tables.sql',
   ],
 
   // Weekday autopilot — every weekday at 04:00 UTC (midnight US East /

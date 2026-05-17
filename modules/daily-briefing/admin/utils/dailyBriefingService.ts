@@ -220,69 +220,12 @@ export async function reorderDailyBriefingItems(
 }
 
 // ── Research autopilot ──────────────────────────────────────────────────────
-
-export interface ResearchCandidate {
-  title: string;
-  summary: string;
-  source_label: string;
-  source_href: string;
-  why: string;
-}
-
-export interface ResearchThread {
-  id: string;
-  day_id: string;
-  status: ResearchThreadStatus;
-  last_error: string | null;
-  input_tokens: number;
-  output_tokens: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ResearchMessage {
-  id: string;
-  thread_id: string;
-  role: 'system' | 'user' | 'assistant' | 'tool_summary';
-  content: string;
-  candidates: ResearchCandidate[] | null;
-  created_at: string;
-}
-
-export async function getResearchThread(
-  dayId: string,
-): Promise<{ thread: ResearchThread; messages: ResearchMessage[] }> {
-  const res = await authedFetch(
-    `/api/modules/daily-briefing/admin/days/${dayId}/research`,
-  );
-  return jsonOrThrow<{ thread: ResearchThread; messages: ResearchMessage[] }>(res);
-}
-
-export async function deleteResearchThread(dayId: string): Promise<void> {
-  const res = await authedFetch(
-    `/api/modules/daily-briefing/admin/days/${dayId}/research`,
-    { method: 'DELETE' },
-  );
-  if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
-}
-
-/**
- * Send a message to the autopilot. Pass `message` empty/omitted to
- * trigger the autopilot kickoff (used by the auto-research entry).
- */
-export async function postResearchMessage(
-  dayId: string,
-  message?: string,
-): Promise<{ thread: ResearchThread; message: ResearchMessage }> {
-  const res = await authedFetch(
-    `/api/modules/daily-briefing/admin/days/${dayId}/research/messages`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ message: message ?? '' }),
-    },
-  );
-  return jsonOrThrow<{ thread: ResearchThread; message: ResearchMessage }>(res);
-}
+//
+// The chat thread + message CRUD lives in @gatewaze-modules/ai. The
+// admin UI consumes AiChatWidget directly; the only daily-briefing-
+// specific service call left is approveResearchCandidate, which reads
+// a candidate from ai_messages.structured and creates a
+// daily_briefing_items row.
 
 export async function approveResearchCandidate(
   dayId: string,
