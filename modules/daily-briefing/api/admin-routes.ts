@@ -115,11 +115,9 @@ export interface AdminDailyBriefingRoutesDeps {
   };
   /**
    * BullMQ enqueue, provided by the platform's ModuleRuntimeContext.
-   * When supplied, the research-kickoff route enqueues a
+   * Required — the research-kickoff route enqueues a
    * `daily-briefing:run-research` job per model so it shows up in
-   * /admin/ai/jobs. When undefined, the route falls back to the
-   * legacy in-process kickoffAutopilot (synchronous; only visible via
-   * the polling chat panel).
+   * /admin/ai/jobs. The handler returns 503 when this isn't wired.
    */
   enqueueJob?: (
     queue: string,
@@ -148,40 +146,6 @@ export interface AdminDailyBriefingRoutesDeps {
       why?: string | null;
     }>;
   }) => Promise<{ storage_path: string; prompt: string }>;
-  /**
-   * Runs one turn of the research autopilot against an LLM + scrapling
-   * fetcher. Injected so admin tests can mock it without bringing in
-   * the Anthropic SDK / web-tools loop. Returns 503 when undefined.
-   */
-  runResearch?: (params: {
-    briefDate: string;
-    history: Array<{
-      role: 'user' | 'assistant';
-      content: string;
-      candidates?: Array<{
-        title: string;
-        summary: string;
-        source_label: string;
-        source_href: string;
-        why: string;
-      }>;
-    }>;
-    message: string;
-    alreadyPublished?: string[];
-    /** Override the hardcoded RESEARCH_SYSTEM_PROMPT. See @gatewaze-modules/ai/lib/use-case-prompt.ts. */
-    systemPromptOverride?: string;
-  }) => Promise<{
-    narrative: string;
-    candidates: Array<{
-      title: string;
-      summary: string;
-      source_label: string;
-      source_href: string;
-      why: string;
-    }>;
-    inputTokens: number;
-    outputTokens: number;
-  }>;
 }
 
 function paramAs(value: unknown): string | undefined {
@@ -328,8 +292,8 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       sendError(res, 400, 'bad_request', 'id (uuid) required');
       return;
     }
-    if (!deps.runResearch) {
-      sendError(res, 503, 'research_unavailable', 'research autopilot is not configured on this instance');
+    if (!deps.enqueueJob) {
+      sendError(res, 503, 'enqueue_unavailable', 'research kickoff requires the platform job queue (enqueueJob not wired)');
       return;
     }
     const dayRes = await supabase
@@ -371,79 +335,59 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       return;
     }
 
-    // spec-ai-job-runner — when the platform's enqueueJob is wired,
-    // create the ai_thread/ai_message rows synchronously then enqueue
-    // a `daily-briefing:run-research` job per model. The job appears
-    // in /admin/ai/jobs and survives an API restart.
-    //
-    // When enqueueJob isn't available (legacy bootstrap or test
-    // harness), fall through to the in-process kickoffAutopilot path
-    // so behaviour is unchanged.
-    if (deps.enqueueJob) {
-      const useCasePrompt = await resolveUseCasePromptSafe(supabase, 'daily-briefing-research');
-      const jobIds: string[] = [];
-      for (const model of models) {
-        const provider = inferProviderFromModel(model);
-        const threadKey = model;
-        const threadRow = await ensureAiThread(supabase, day.id, threadKey);
-        if ('error' in threadRow) {
-          logger.warn('daily-briefing.research.enqueue.thread_create_failed', {
-            day_id: day.id, model, error: threadRow.error,
-          });
-          continue;
-        }
-        if (threadRow.value.status === 'running') continue;
-        const placeholder = await supabase
-          .from('ai_messages')
-          .insert({
-            thread_id: threadRow.value.id,
-            role: 'assistant',
-            status: 'queued',
-            content: '',
-            provider,
-            model,
-          })
-          .select('id')
-          .maybeSingle();
-        if (placeholder.error || !placeholder.data) {
-          logger.warn('daily-briefing.research.enqueue.placeholder_failed', {
-            day_id: day.id, model, error: placeholder.error?.message,
-          });
-          continue;
-        }
-        const messageId = (placeholder.data as { id: string }).id;
-        await supabase
-          .from('ai_threads')
-          .update({ status: 'running', last_error: null })
-          .eq('id', threadRow.value.id);
-        const enq = await deps.enqueueJob('jobs', 'daily-briefing:run-research', {
-          dayId: day.id,
-          threadId: threadRow.value.id,
-          messageId,
-          model,
-          briefDate: day.brief_date,
-          siteId: day.site_id,
-          systemPromptOverride: useCasePrompt.systemPrompt,
-          kickoffMessage: useCasePrompt.kickoffMessage,
-        });
-        if (enq.id) jobIds.push(enq.id);
-      }
-      res.status(202).json({ status: 'queued', models, job_ids: jobIds });
-      return;
-    }
-
-    // Legacy fallback (in-process). Kept until all deployments wire
-    // enqueueJob through ModuleRuntimeContext.
+    // spec-ai-job-runner — create the ai_thread / ai_message rows
+    // synchronously, then enqueue `daily-briefing:run-research` per
+    // model. The job appears in /admin/ai/jobs and survives an API
+    // restart.
+    const useCasePrompt = await resolveUseCasePromptSafe(supabase, 'daily-briefing-research');
+    const jobIds: string[] = [];
     for (const model of models) {
-      void kickoffAutopilot({
-        supabase,
-        logger,
-        runResearch: deps.runResearch,
-        day,
+      const provider = inferProviderFromModel(model);
+      const threadKey = model;
+      const threadRow = await ensureAiThread(supabase, day.id, threadKey);
+      if ('error' in threadRow) {
+        logger.warn('daily-briefing.research.enqueue.thread_create_failed', {
+          day_id: day.id, model, error: threadRow.error,
+        });
+        continue;
+      }
+      if (threadRow.value.status === 'running') continue;
+      const placeholder = await supabase
+        .from('ai_messages')
+        .insert({
+          thread_id: threadRow.value.id,
+          role: 'assistant',
+          status: 'queued',
+          content: '',
+          provider,
+          model,
+        })
+        .select('id')
+        .maybeSingle();
+      if (placeholder.error || !placeholder.data) {
+        logger.warn('daily-briefing.research.enqueue.placeholder_failed', {
+          day_id: day.id, model, error: placeholder.error?.message,
+        });
+        continue;
+      }
+      const messageId = (placeholder.data as { id: string }).id;
+      await supabase
+        .from('ai_threads')
+        .update({ status: 'running', last_error: null })
+        .eq('id', threadRow.value.id);
+      const enq = await deps.enqueueJob('jobs', 'daily-briefing:run-research', {
+        dayId: day.id,
+        threadId: threadRow.value.id,
+        messageId,
         model,
+        briefDate: day.brief_date,
+        siteId: day.site_id,
+        systemPromptOverride: useCasePrompt.systemPrompt,
+        kickoffMessage: useCasePrompt.kickoffMessage,
       });
+      if (enq.id) jobIds.push(enq.id);
     }
-    res.status(202).json({ status: 'running', models });
+    res.status(202).json({ status: 'queued', models, job_ids: jobIds });
   }
 
   async function patchDay(req: Request, res: Response): Promise<void> {
@@ -971,189 +915,6 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
 }
 
 // ─── Research helpers (module-private) ────────────────────────────────────
-
-/**
- * Fire-and-forget research kickoff for a day. Triggered explicitly by
- * the operator (POST /admin/days/:id/research/run) or by the weekday
- * cron — no longer auto-fires on day create so we don't burn AI credit
- * when the operator is populating manually.
- *
- * Failures are logged but never surface to the client. The thread row
- * carries the failure state via status='failed' + last_error so the
- * UI can show a retry affordance.
- *
- * Fire the autopilot for a day. Persists into the ai
- * module's `ai_threads` / `ai_messages` (keyed by use_case=
- * 'daily-briefing-research', host_kind='daily_briefing_day',
- * host_id=day.id) so the AiChatWidget renders the result without any
- * extra wiring.
- */
-async function kickoffAutopilot(args: {
-  supabase: SupabaseClient;
-  logger: AdminDailyBriefingRoutesDeps['logger'];
-  runResearch: NonNullable<AdminDailyBriefingRoutesDeps['runResearch']>;
-  day: { id: string; site_id: string; brief_date: string };
-  /**
-   * Which model to invoke. Becomes both the runChat model + the
-   * thread_key, so each model's output lands in its own tab in the
-   * AiChatModelTabs widget. When undefined, defaults to the canonical
-   * AUTOPILOT_THREAD_KEY (the first tab opened by the widget).
-   */
-  model?: string;
-}): Promise<void> {
-  const { supabase, logger, runResearch, day, model } = args;
-  // The thread_key is the model id so the per-tab chat widget can
-  // discover it. Provider is inferred from the model name (anthropic
-  // for claude-*, openai for gpt-*, gemini for gemini-*).
-  const threadKey = model ?? AUTOPILOT_THREAD_KEY;
-  const provider = inferProviderFromModel(threadKey);
-  // Declared outside the try block so the catch handler can also clear
-  // the placeholder (otherwise a provider error leaves the message at
-  // status='running' forever and the widget spins indefinitely).
-  let messageId: string | null = null;
-  try {
-    // 1. Ensure the ai_threads row exists. The unique constraint is
-    //    (use_case, host_kind, host_id, thread_key) — thread_key is the
-    //    model id so each tab gets its own thread.
-    const threadRow = await ensureAiThread(supabase, day.id, threadKey);
-    if ('error' in threadRow) {
-      logger.warn('daily-briefing.research.kickoff.thread_create_failed', {
-        day_id: day.id,
-        error: threadRow.error,
-      });
-      return;
-    }
-    if (threadRow.value.status === 'running') {
-      // Another caller is mid-flight; bail.
-      return;
-    }
-
-    // 2. Insert an assistant placeholder. Operator-facing UI polls
-    //    ai_messages.status; the placeholder lets the spinner appear
-    //    instantly.
-    const placeholder = await supabase
-      .from('ai_messages')
-      .insert({
-        thread_id: threadRow.value.id,
-        role: 'assistant',
-        status: 'running',
-        content: '',
-      })
-      .select('id')
-      .maybeSingle();
-    if (placeholder.error || !placeholder.data) {
-      throw new Error(`placeholder insert: ${placeholder.error?.message ?? 'no row'}`);
-    }
-    messageId = (placeholder.data as { id: string }).id;
-    await supabase
-      .from('ai_threads')
-      .update({ status: 'running', last_error: null })
-      .eq('id', threadRow.value.id);
-
-    // 3. Build the dedup list. Two sources, both scoped to this site:
-    //    (a) every item ever added to any day (any status, any age) —
-    //        these are stories the editorial team has already promoted
-    //        to a day, so we don't want autopilot to re-surface them.
-    //    (b) every candidate title surfaced by autopilot in any prior
-    //        day's research thread — even ones that weren't added.
-    //        Otherwise the model can re-propose the same article every
-    //        day until somebody finally clicks Add.
-    //
-    // The model also sees the prompt's "do not propose these" list, so
-    // the constraint is explicit; the dedup query is the source of truth.
-    const alreadyPublished = await buildAutopilotDedupList(supabase, day.site_id);
-
-    // 4. Resolve the system prompt + kickoff message from the use case
-    //    (migration 008_ai_use_cases_skill_ref). Operators set these
-    //    via the AI > Use Cases admin page — either inline or by
-    //    binding a skill from a configured ai_skill_sources repo.
-    //    Empty strings mean "use the hardcoded fallbacks in
-    //    research-runner.ts and let the model run without a kickoff
-    //    message."
-    const useCasePrompt = await resolveUseCasePromptSafe(supabase, 'daily-briefing-research');
-
-    // 5. Run the research turn (bridged through @gatewaze-modules/ai's
-    //    runChat — cost ledger + retries + daily cap are enforced
-    //    there). Pass the message ID so the usage_event row links back.
-    const result = await runResearch({
-      briefDate: day.brief_date,
-      history: [],
-      message: useCasePrompt.kickoffMessage,
-      alreadyPublished,
-      threadId: threadRow.value.id,
-      messageId,
-      systemPromptOverride: useCasePrompt.systemPrompt,
-      model: threadKey,
-      provider,
-    });
-
-    // 5. Update the placeholder with the assistant's narrative +
-    //    structured candidates sidecar. Record the actual model/provider
-    //    the run targeted so the cost-attribution ledger lines up.
-    await supabase
-      .from('ai_messages')
-      .update({
-        status: 'complete',
-        content: result.narrative,
-        structured: { narrative: result.narrative, candidates: result.candidates },
-        input_tokens: result.inputTokens,
-        output_tokens: result.outputTokens,
-        cost_micro_usd: result.costMicroUsd,
-        provider,
-        model: threadKey,
-      })
-      .eq('id', messageId);
-    await supabase
-      .from('ai_threads')
-      .update({
-        status: 'ready',
-        last_error: null,
-        input_tokens: (threadRow.value.input_tokens ?? 0) + result.inputTokens,
-        output_tokens: (threadRow.value.output_tokens ?? 0) + result.outputTokens,
-        cost_micro_usd: (threadRow.value.cost_micro_usd ?? 0) + result.costMicroUsd,
-      })
-      .eq('id', threadRow.value.id);
-
-    logger.info('daily-briefing.research.kickoff.complete', {
-      day_id: day.id,
-      candidates: result.candidates.length,
-      cost_micro_usd: result.costMicroUsd,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.warn('daily-briefing.research.kickoff.failed', {
-      day_id: day.id,
-      model: threadKey,
-      error: message,
-    });
-    // Clear the assistant placeholder so the widget surfaces the error
-    // instead of spinning forever. We write the error message into
-    // `content` so the operator can read it in the chat bubble; the
-    // `status='error'` flag flips off the running spinner.
-    if (messageId) {
-      await supabase
-        .from('ai_messages')
-        .update({
-          status: 'failed',
-          content: `Run failed: ${message}`,
-          provider,
-          model: threadKey,
-        })
-        .eq('id', messageId)
-        .then(() => undefined, () => undefined);
-    }
-    // Mark THIS model's thread failed — scoping by thread_key so a
-    // failure in one tab doesn't blank out the others.
-    await supabase
-      .from('ai_threads')
-      .update({ status: 'failed', last_error: message })
-      .eq('use_case', 'daily-briefing-research')
-      .eq('host_kind', 'daily_briefing_day')
-      .eq('host_id', day.id)
-      .eq('thread_key', threadKey)
-      .then(() => undefined, () => undefined);
-  }
-}
 
 /**
  * Provider lookup from model id. Used by the autopilot when fanning
