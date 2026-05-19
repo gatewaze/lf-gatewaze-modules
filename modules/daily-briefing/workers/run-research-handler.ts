@@ -14,8 +14,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { createRequire } from 'node:module';
-// We resolve runtime deps lazily through the host project (matches the
-// pattern in run-recipe-handler / inspector / redis-client).
+import { makeResearchRunner } from '../lib/research-runner.js';
+// ioredis is resolved through the API package's module graph
+// (createRequire below); research-runner imports statically because
+// the handler lives in the daily-briefing module.
 
 interface JobInput {
   data: {
@@ -113,50 +115,9 @@ export default async function runResearchHandler(
     }
   }
 
-  // Load the research-runner from the daily-briefing module's own
-  // path (the worker process resolves this through the host's
-  // pnpm-linked workspace).
-  const runnerCandidates = [
-    `${projectRoot}/lf-gatewaze-modules/modules/daily-briefing/lib/research-runner.ts`,
-    '@lf-gatewaze-modules/daily-briefing/lib/research-runner.js',
-    '../lib/research-runner.js',
-  ];
-  type MakeResearchRunner = (deps: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    supabase: any;
-    logger: NonNullable<RuntimeContext['logger']>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolveFetchUrl?: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolveGatewazeSearch?: any;
-  }) => (opts: Record<string, unknown>) => Promise<{
-    narrative: string;
-    candidates: Array<Record<string, unknown>>;
-    inputTokens: number;
-    outputTokens: number;
-    costMicroUsd: number;
-  }>;
-  let makeResearchRunner: MakeResearchRunner | null = null;
-  for (const c of runnerCandidates) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const mod = req(c) as { makeResearchRunner: MakeResearchRunner };
-      if (mod?.makeResearchRunner) {
-        makeResearchRunner = mod.makeResearchRunner;
-        break;
-      }
-    } catch {
-      // try next
-    }
-  }
-  if (!makeResearchRunner) {
-    await markFailed(supabase, messageId, threadId, 'research-runner not resolvable');
-    await streamPush('run.failed', { error: { code: 'runner_unresolved', message: 'research-runner not found' } });
-    throw new Error('UnrecoverableError: research-runner not resolvable');
-  }
-
   const runResearch = makeResearchRunner({
-    supabase,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: supabase as any,
     logger: ctx?.logger ?? {
       info: () => {},
       warn: () => {},
