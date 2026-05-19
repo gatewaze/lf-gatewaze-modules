@@ -24,34 +24,16 @@ const dailyBriefingModule: GatewazeModule = {
     'migrations/007_items_why.sql',
   ],
 
-  // Weekday autopilot — every weekday at 04:00 UTC (midnight US East /
-  // 21:00 US Pacific), provision today's day (if not already created)
-  // and run the AI research pass against it so the chat panel is
-  // pre-populated when an operator arrives. Skips any site whose day
-  // already has items or a non-empty thread (we never overwrite
-  // operator work). See workers/weekday-autopilot.ts for the handler.
+  // spec-ai-job-runner — moves research-kickoff off the API process
+  // so each model's run appears in /admin/ai/jobs and survives an
+  // API restart. The chat itself still uses the AI module's runChat;
+  // this handler is the daily-briefing-specific wrapper that knows
+  // about structuredTool=submit_candidates + the dedup list.
   workers: [
-    {
-      name: 'daily-briefing.weekday-autopilot',
-      handler: './workers/weekday-autopilot.ts',
-    },
-    // spec-ai-job-runner — moves research-kickoff off the API process
-    // so each model's run appears in /admin/ai/jobs and survives an
-    // API restart. The chat itself still uses the AI module's runChat;
-    // this handler is the daily-briefing-specific wrapper that knows
-    // about structuredTool=submit_candidates + the dedup list.
     {
       name: 'daily-briefing:run-research',
       handler: './workers/run-research-handler.ts',
       concurrency: Number(process.env.DAILY_BRIEFING_RESEARCH_CONCURRENCY ?? 3),
-    },
-  ],
-  crons: [
-    {
-      name: 'daily-briefing.weekday-autopilot',
-      queue: 'jobs',
-      schedule: { pattern: '0 4 * * 1-5', tz: 'UTC' },
-      data: { kind: 'daily-briefing.weekday-autopilot' },
     },
   ],
 
