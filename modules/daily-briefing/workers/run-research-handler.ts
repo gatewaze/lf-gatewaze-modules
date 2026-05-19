@@ -129,6 +129,26 @@ export default async function runResearchHandler(
 
   const provider = inferProviderFromModel(model);
 
+  // Transition the message row queued -> running. The state-machine
+  // trigger added by gatewaze-modules/ai/migrations/021 rejects a
+  // direct queued -> complete jump (raises check_violation), and
+  // because supabase-js returns errors via the response object rather
+  // than throwing, a silent failure would leave the row stuck at
+  // 'queued' even though the worker finished successfully.
+  {
+    const transition = await supabase
+      .from('ai_messages')
+      .update({ status: 'running' })
+      .eq('id', messageId);
+    if (transition.error) {
+      await markFailed(supabase, messageId, threadId, `queued->running failed: ${transition.error.message}`);
+      await streamPush('run.failed', {
+        error: { code: 'state_transition_failed', message: transition.error.message },
+      });
+      throw new Error(`UnrecoverableError: queued->running failed: ${transition.error.message}`);
+    }
+  }
+
   // run.start event for the Jobs tab live-tail.
   await streamPush('run.start', { recipeId: `daily-briefing:${dayId}` });
   if (redis) await redis.expire(streamKey, STREAM_TTL_SECONDS).catch(() => undefined);
@@ -148,7 +168,7 @@ export default async function runResearchHandler(
     });
 
     // Persist into the ai_messages placeholder the API created.
-    await supabase
+    const msgUpd = await supabase
       .from('ai_messages')
       .update({
         status: 'complete',
@@ -161,6 +181,9 @@ export default async function runResearchHandler(
         model,
       })
       .eq('id', messageId);
+    if (msgUpd.error) {
+      throw new Error(`ai_messages running->complete update failed: ${msgUpd.error.message}`);
+    }
     await supabase
       .from('ai_threads')
       .update({
