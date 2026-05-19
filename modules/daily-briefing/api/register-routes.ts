@@ -49,7 +49,18 @@ function defaultLogger(): PlatformLogger {
   };
 }
 
-export function registerRoutes(app: Express): void {
+interface RegisterCtx {
+  enqueueJob?: (
+    queue: string,
+    name: string,
+    data: Record<string, unknown>,
+  ) => Promise<{ id: string | undefined }>;
+}
+
+export async function registerRoutes(
+  app: Express,
+  ctx?: RegisterCtx,
+): Promise<void> {
   const logger = defaultLogger();
   const supabaseUrl = process.env.SUPABASE_URL ?? '';
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
@@ -92,7 +103,62 @@ export function registerRoutes(app: Express): void {
       'SCRAPLING_FETCHER_URL / SCRAPLING_INTERNAL_TOKEN not set — research autopilot will run without fetch_url (model relies on web_search alone)',
     );
   }
-  const runResearch = makeResearchRunner({ supabase, resolveFetchUrl, logger });
+
+  // gatewaze_search resolver — paired with allowed_web_tools containing
+  // 'gatewaze_search'. Mirrors the ai module's plumbing so the autopilot
+  // path (which goes through this register-routes.ts rather than the
+  // ai module's own runner) also gets a working internal search tool.
+  // Resolved lazily through the same dynamic-import shim
+  // research-runner.ts uses for runChat — sidesteps the "module not
+  // found" issue when running under tsx with different working dirs.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let resolveGatewazeSearch: any | undefined;
+  try {
+    const attempts = [
+      '@gatewaze-modules/ai/lib/gatewaze-search.js',
+      '../../../../gatewaze-modules/modules/ai/lib/gatewaze-search.ts',
+    ];
+    let mod: { buildGatewazeSearchResolver?: unknown } | undefined;
+    for (const p of attempts) {
+      try {
+        mod = (await import(p)) as { buildGatewazeSearchResolver?: unknown };
+        if (mod.buildGatewazeSearchResolver) break;
+      } catch {
+        /* try next */
+      }
+    }
+    if (mod?.buildGatewazeSearchResolver) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const build = mod.buildGatewazeSearchResolver as (o: Record<string, unknown>) => any;
+      resolveGatewazeSearch = build({
+        serperApiKey: process.env.SERPER_API_KEY || undefined,
+        backend:
+          (process.env.GATEWAZE_SEARCH_BACKEND as 'auto' | 'serper' | 'ddg' | undefined) ?? 'auto',
+        scraplingFetcherUrl: scraplingFetcherUrl || undefined,
+        scraplingInternalToken: scraplingInternalToken || undefined,
+        logger,
+      });
+      logger.info('gatewaze_search resolver wired', {
+        backend: process.env.GATEWAZE_SEARCH_BACKEND ?? 'auto',
+        serper_configured: Boolean(process.env.SERPER_API_KEY),
+      });
+    } else {
+      logger.warn(
+        'failed to resolve @gatewaze-modules/ai/lib/gatewaze-search — autopilot will run without gatewaze_search',
+      );
+    }
+  } catch (err) {
+    logger.warn(
+      `failed to wire gatewaze_search resolver: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  const runResearch = makeResearchRunner({
+    supabase,
+    resolveFetchUrl,
+    resolveGatewazeSearch,
+    logger,
+  });
 
   // Admin CRUD. The platform labels /api/modules/<id> as 'jwt', so
   // the JWT middleware gates these handlers before they run.
@@ -102,6 +168,7 @@ export function registerRoutes(app: Express): void {
     logger,
     generateDayImage,
     runResearch,
+    ...(ctx?.enqueueJob && { enqueueJob: ctx.enqueueJob }),
   });
   mountAdminDailyBriefingRoutes(adminRouter, adminRoutes);
   app.use('/api/modules/daily-briefing', adminRouter);

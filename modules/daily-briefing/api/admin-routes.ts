@@ -33,6 +33,17 @@ const ALLOWED_STATUSES = new Set(['draft', 'published', 'archived']);
 // actual count flows through unchanged (1 story → 1 panel, 3 → 3, etc.).
 const MAX_STORIES_PER_COVER = 5;
 
+// Lookback window for the autopilot dedup list. Sites that have been
+// running for months accumulate hundreds of stories; passing them all
+// to the model blows the prompt budget for diminishing returns (an
+// article from a week+ ago is unlikely to come up again as "today's
+// news"). 7 days catches repeats from the same news cycle without
+// bloating context. Override via env var if a site has a longer
+// editorial memory.
+const AUTOPILOT_DEDUP_LOOKBACK_DAYS = Number(
+  process.env.DAILY_BRIEFING_DEDUP_LOOKBACK_DAYS ?? 7,
+);
+
 const DAY_WRITE_FIELDS = new Set<string>([
   'brief_date',
   'status',
@@ -44,6 +55,7 @@ const ITEM_WRITE_FIELDS = new Set<string>([
   'summary',
   'source_label',
   'source_href',
+  'why',
   'status',
   'display_order',
 ]);
@@ -53,6 +65,7 @@ const ITEM_PATCH_FIELDS = new Set<string>([
   'summary',
   'source_label',
   'source_href',
+  'why',
   'status',
   'display_order',
 ]);
@@ -101,6 +114,19 @@ export interface AdminDailyBriefingRoutesDeps {
     warn: (msg: string, meta?: Record<string, unknown>) => void;
   };
   /**
+   * BullMQ enqueue, provided by the platform's ModuleRuntimeContext.
+   * When supplied, the research-kickoff route enqueues a
+   * `daily-briefing:run-research` job per model so it shows up in
+   * /admin/ai/jobs. When undefined, the route falls back to the
+   * legacy in-process kickoffAutopilot (synchronous; only visible via
+   * the polling chat panel).
+   */
+  enqueueJob?: (
+    queue: string,
+    name: string,
+    data: Record<string, unknown>,
+  ) => Promise<{ id: string | undefined }>;
+  /**
    * Generates a cartoon-style image for a day's stories and uploads it
    * via the host-media adapter. Injected so the route stays testable
    * and so we don't pull Gemini + supabase-storage into route-level
@@ -110,7 +136,17 @@ export interface AdminDailyBriefingRoutesDeps {
     dayId: string;
     siteId: string;
     briefDate: string;
-    stories: Array<{ title: string; summary: string; source_label: string }>;
+    stories: Array<{
+      title: string;
+      summary: string;
+      source_label: string;
+      /**
+       * Editorial reasoning from the research autopilot — when present,
+       * the cover-image prompt uses it to stage each panel against the
+       * story's significance rather than just the headline text.
+       */
+      why?: string | null;
+    }>;
   }) => Promise<{ storage_path: string; prompt: string }>;
   /**
    * Runs one turn of the research autopilot against an LLM + scrapling
@@ -132,6 +168,8 @@ export interface AdminDailyBriefingRoutesDeps {
     }>;
     message: string;
     alreadyPublished?: string[];
+    /** Override the hardcoded RESEARCH_SYSTEM_PROMPT. See @gatewaze-modules/ai/lib/use-case-prompt.ts. */
+    systemPromptOverride?: string;
   }) => Promise<{
     narrative: string;
     candidates: Array<{
@@ -145,11 +183,6 @@ export interface AdminDailyBriefingRoutesDeps {
     outputTokens: number;
   }>;
 }
-
-// Number of recently-published days to scan for dedup titles when
-// invoking the autopilot. Higher = less repetition of past stories,
-// at the cost of a longer prompt.
-const RESEARCH_HISTORY_RECENT_PUBLISHED_DAYS = 7;
 
 function paramAs(value: unknown): string | undefined {
   if (typeof value === 'string' && value.length > 0) return value;
@@ -270,19 +303,147 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       return;
     }
     const newDay = result.data as { id: string; site_id: string; brief_date: string };
-    // Fire-and-forget the research autopilot on freshly-created days
-    // (when wired). The HTTP response returns immediately; the chat
-    // panel polls the thread status until it flips from running →
-    // ready so the operator sees the candidates without refreshing.
-    if (deps.runResearch) {
-      void kickoffAutopilotForNewDay({
+    // No auto-kickoff. The autopilot only runs when the operator
+    // explicitly clicks "Run research" — POST /admin/days/:id/research/run.
+    // Rationale: many days are populated manually (operator already has
+    // the stories in hand), and autopilot calls burn AI credit. Making
+    // the trigger explicit keeps spend predictable.
+    res.status(201).json(newDay);
+  }
+
+  /**
+   * Manual autopilot trigger. Fans out one kickoff per model the caller
+   * supplies in the request body — typically every model tab the
+   * operator has open in the chat widget — so each model writes its
+   * candidate output into its own thread (keyed by `thread_key=<modelId>`)
+   * and the operator can compare side-by-side.
+   *
+   * Body shape: { models: string[] }. If absent or empty, falls back to
+   * the use case's allowed_models, so a cron-style call without an
+   * explicit list still runs against every model the use case permits.
+   */
+  async function runResearchKickoff(req: Request, res: Response): Promise<void> {
+    const id = paramAs(req.params.id);
+    if (!id || !UUID_RE.test(id)) {
+      sendError(res, 400, 'bad_request', 'id (uuid) required');
+      return;
+    }
+    if (!deps.runResearch) {
+      sendError(res, 503, 'research_unavailable', 'research autopilot is not configured on this instance');
+      return;
+    }
+    const dayRes = await supabase
+      .from('daily_briefing_days')
+      .select('id, site_id, brief_date')
+      .eq('id', id)
+      .maybeSingle();
+    if (dayRes.error || !dayRes.data) {
+      sendError(res, 404, 'not_found', `day '${id}' not found`);
+      return;
+    }
+    const day = dayRes.data as { id: string; site_id: string; brief_date: string };
+
+    // Resolve the model list. Body-supplied models win (so the UI can
+    // mirror exactly which tabs the operator has open). Otherwise fall
+    // back to the use case's allowed_models — the server-known canonical
+    // list, what the cron / webhook callers will hit.
+    const body = (req.body ?? {}) as { models?: unknown };
+    let models: string[] = [];
+    if (Array.isArray(body.models)) {
+      models = (body.models as unknown[]).filter((m): m is string => typeof m === 'string' && m.length > 0);
+    }
+    if (models.length === 0) {
+      const ucRes = await supabase
+        .from('ai_use_cases')
+        .select('allowed_models, default_model')
+        .eq('id', 'daily-briefing-research')
+        .maybeSingle();
+      const uc = ucRes.data as { allowed_models?: string[]; default_model?: string } | null;
+      const allowed = (uc?.allowed_models ?? []).filter((m): m is string => typeof m === 'string' && m.length > 0);
+      if (allowed.length > 0) {
+        models = allowed;
+      } else if (uc?.default_model) {
+        models = [uc.default_model];
+      }
+    }
+    if (models.length === 0) {
+      sendError(res, 400, 'no_models', 'no models supplied and the use case has no allowed_models configured');
+      return;
+    }
+
+    // spec-ai-job-runner — when the platform's enqueueJob is wired,
+    // create the ai_thread/ai_message rows synchronously then enqueue
+    // a `daily-briefing:run-research` job per model. The job appears
+    // in /admin/ai/jobs and survives an API restart.
+    //
+    // When enqueueJob isn't available (legacy bootstrap or test
+    // harness), fall through to the in-process kickoffAutopilot path
+    // so behaviour is unchanged.
+    if (deps.enqueueJob) {
+      const useCasePrompt = await resolveUseCasePromptSafe(supabase, 'daily-briefing-research');
+      const jobIds: string[] = [];
+      for (const model of models) {
+        const provider = inferProviderFromModel(model);
+        const threadKey = model;
+        const threadRow = await ensureAiThread(supabase, day.id, threadKey);
+        if ('error' in threadRow) {
+          logger.warn('daily-briefing.research.enqueue.thread_create_failed', {
+            day_id: day.id, model, error: threadRow.error,
+          });
+          continue;
+        }
+        if (threadRow.value.status === 'running') continue;
+        const placeholder = await supabase
+          .from('ai_messages')
+          .insert({
+            thread_id: threadRow.value.id,
+            role: 'assistant',
+            status: 'queued',
+            content: '',
+            provider,
+            model,
+          })
+          .select('id')
+          .maybeSingle();
+        if (placeholder.error || !placeholder.data) {
+          logger.warn('daily-briefing.research.enqueue.placeholder_failed', {
+            day_id: day.id, model, error: placeholder.error?.message,
+          });
+          continue;
+        }
+        const messageId = (placeholder.data as { id: string }).id;
+        await supabase
+          .from('ai_threads')
+          .update({ status: 'running', last_error: null })
+          .eq('id', threadRow.value.id);
+        const enq = await deps.enqueueJob('jobs', 'daily-briefing:run-research', {
+          dayId: day.id,
+          threadId: threadRow.value.id,
+          messageId,
+          model,
+          briefDate: day.brief_date,
+          siteId: day.site_id,
+          systemPromptOverride: useCasePrompt.systemPrompt,
+          kickoffMessage: useCasePrompt.kickoffMessage,
+        });
+        if (enq.id) jobIds.push(enq.id);
+      }
+      res.status(202).json({ status: 'queued', models, job_ids: jobIds });
+      return;
+    }
+
+    // Legacy fallback (in-process). Kept until all deployments wire
+    // enqueueJob through ModuleRuntimeContext.
+    for (const model of models) {
+      void kickoffAutopilot({
         supabase,
         logger,
         runResearch: deps.runResearch,
-        day: newDay,
+        day,
+        model,
       });
     }
-    res.status(201).json(newDay);
+    res.status(202).json({ status: 'running', models });
   }
 
   async function patchDay(req: Request, res: Response): Promise<void> {
@@ -442,7 +603,7 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
     // operator intent.
     const itemsRes = await supabase
       .from('daily_briefing_items')
-      .select('title, summary, source_label')
+      .select('title, summary, source_label, why')
       .eq('day_id', id)
       .eq('status', 'published')
       .order('display_order', { ascending: true })
@@ -451,6 +612,7 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       title: string;
       summary: string;
       source_label: string;
+      why: string | null;
     }>;
     if (items.length === 0) {
       sendError(
@@ -728,7 +890,13 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
     };
     const list = Array.isArray(msg.structured?.candidates) ? msg.structured!.candidates : [];
     const cand = list[candidateIndex] as
-      | { title?: unknown; summary?: unknown; source_label?: unknown; source_href?: unknown }
+      | {
+          title?: unknown;
+          summary?: unknown;
+          source_label?: unknown;
+          source_href?: unknown;
+          why?: unknown;
+        }
       | undefined;
     if (
       !cand ||
@@ -740,6 +908,11 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
       sendError(res, 404, 'not_found', 'candidate not found at that index');
       return;
     }
+    // `why` is optional in the schema (older candidates predate it),
+    // so we coerce non-string values to null rather than rejecting.
+    const why = typeof cand.why === 'string' && cand.why.trim().length > 0
+      ? cand.why.trim()
+      : null;
 
     // Auto-position at the end of the day's existing items.
     const maxRes = await supabase
@@ -760,6 +933,7 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
         summary: cand.summary,
         source_label: cand.source_label,
         source_href: cand.source_href,
+        why,
         status: 'draft',
       })
       .select('*')
@@ -792,42 +966,56 @@ export function createAdminDailyBriefingRoutes(deps: AdminDailyBriefingRoutesDep
     publishItem,
     reorderItems,
     approveResearchCandidate,
+    runResearchKickoff,
   };
 }
 
 // ─── Research helpers (module-private) ────────────────────────────────────
 
 /**
- * Fire-and-forget research kickoff on day creation. Mirrors what the
- * weekday-autopilot cron does for auto-created days but runs in the
- * background after a manual create — so the operator's "New day"
- * action populates the chat panel without an explicit "Run autopilot"
- * click.
+ * Fire-and-forget research kickoff for a day. Triggered explicitly by
+ * the operator (POST /admin/days/:id/research/run) or by the weekday
+ * cron — no longer auto-fires on day create so we don't burn AI credit
+ * when the operator is populating manually.
  *
- * Failures are logged but never surface to the client (the day was
- * already created successfully). The thread row carries the failure
- * state via status='failed' + last_error so the UI can show a retry
- * affordance.
- */
-/**
- * Fire the autopilot for a newly-created day. Persists into the ai
+ * Failures are logged but never surface to the client. The thread row
+ * carries the failure state via status='failed' + last_error so the
+ * UI can show a retry affordance.
+ *
+ * Fire the autopilot for a day. Persists into the ai
  * module's `ai_threads` / `ai_messages` (keyed by use_case=
  * 'daily-briefing-research', host_kind='daily_briefing_day',
  * host_id=day.id) so the AiChatWidget renders the result without any
  * extra wiring.
  */
-async function kickoffAutopilotForNewDay(args: {
+async function kickoffAutopilot(args: {
   supabase: SupabaseClient;
   logger: AdminDailyBriefingRoutesDeps['logger'];
   runResearch: NonNullable<AdminDailyBriefingRoutesDeps['runResearch']>;
   day: { id: string; site_id: string; brief_date: string };
+  /**
+   * Which model to invoke. Becomes both the runChat model + the
+   * thread_key, so each model's output lands in its own tab in the
+   * AiChatModelTabs widget. When undefined, defaults to the canonical
+   * AUTOPILOT_THREAD_KEY (the first tab opened by the widget).
+   */
+  model?: string;
 }): Promise<void> {
-  const { supabase, logger, runResearch, day } = args;
+  const { supabase, logger, runResearch, day, model } = args;
+  // The thread_key is the model id so the per-tab chat widget can
+  // discover it. Provider is inferred from the model name (anthropic
+  // for claude-*, openai for gpt-*, gemini for gemini-*).
+  const threadKey = model ?? AUTOPILOT_THREAD_KEY;
+  const provider = inferProviderFromModel(threadKey);
+  // Declared outside the try block so the catch handler can also clear
+  // the placeholder (otherwise a provider error leaves the message at
+  // status='running' forever and the widget spins indefinitely).
+  let messageId: string | null = null;
   try {
     // 1. Ensure the ai_threads row exists. The unique constraint is
-    //    (use_case, host_kind, host_id, thread_key) — use thread_key=''
-    //    for the singular per-day thread.
-    const threadRow = await ensureAiThread(supabase, day.id);
+    //    (use_case, host_kind, host_id, thread_key) — thread_key is the
+    //    model id so each tab gets its own thread.
+    const threadRow = await ensureAiThread(supabase, day.id, threadKey);
     if ('error' in threadRow) {
       logger.warn('daily-briefing.research.kickoff.thread_create_failed', {
         day_id: day.id,
@@ -856,41 +1044,52 @@ async function kickoffAutopilotForNewDay(args: {
     if (placeholder.error || !placeholder.data) {
       throw new Error(`placeholder insert: ${placeholder.error?.message ?? 'no row'}`);
     }
-    const messageId = (placeholder.data as { id: string }).id;
+    messageId = (placeholder.data as { id: string }).id;
     await supabase
       .from('ai_threads')
       .update({ status: 'running', last_error: null })
       .eq('id', threadRow.value.id);
 
-    // 3. Build the dedup list (titles from items in recently-published days).
-    const recentDays = await supabase
-      .from('daily_briefing_days')
-      .select('id')
-      .eq('site_id', day.site_id)
-      .eq('status', 'published')
-      .order('brief_date', { ascending: false })
-      .limit(7);
-    const dayIds = ((recentDays.data ?? []) as Array<{ id: string }>).map((d) => d.id);
-    let alreadyPublished: string[] = [];
-    if (dayIds.length > 0) {
-      const items = await supabase.from('daily_briefing_items').select('title');
-      alreadyPublished = ((items.data ?? []) as Array<{ title: string }>).map((r) => r.title);
-    }
+    // 3. Build the dedup list. Two sources, both scoped to this site:
+    //    (a) every item ever added to any day (any status, any age) —
+    //        these are stories the editorial team has already promoted
+    //        to a day, so we don't want autopilot to re-surface them.
+    //    (b) every candidate title surfaced by autopilot in any prior
+    //        day's research thread — even ones that weren't added.
+    //        Otherwise the model can re-propose the same article every
+    //        day until somebody finally clicks Add.
+    //
+    // The model also sees the prompt's "do not propose these" list, so
+    // the constraint is explicit; the dedup query is the source of truth.
+    const alreadyPublished = await buildAutopilotDedupList(supabase, day.site_id);
 
-    // 4. Run the research turn (bridged through @gatewaze-modules/ai's
+    // 4. Resolve the system prompt + kickoff message from the use case
+    //    (migration 008_ai_use_cases_skill_ref). Operators set these
+    //    via the AI > Use Cases admin page — either inline or by
+    //    binding a skill from a configured ai_skill_sources repo.
+    //    Empty strings mean "use the hardcoded fallbacks in
+    //    research-runner.ts and let the model run without a kickoff
+    //    message."
+    const useCasePrompt = await resolveUseCasePromptSafe(supabase, 'daily-briefing-research');
+
+    // 5. Run the research turn (bridged through @gatewaze-modules/ai's
     //    runChat — cost ledger + retries + daily cap are enforced
     //    there). Pass the message ID so the usage_event row links back.
     const result = await runResearch({
       briefDate: day.brief_date,
       history: [],
-      message: '',
+      message: useCasePrompt.kickoffMessage,
       alreadyPublished,
       threadId: threadRow.value.id,
       messageId,
+      systemPromptOverride: useCasePrompt.systemPrompt,
+      model: threadKey,
+      provider,
     });
 
     // 5. Update the placeholder with the assistant's narrative +
-    //    structured candidates sidecar.
+    //    structured candidates sidecar. Record the actual model/provider
+    //    the run targeted so the cost-attribution ledger lines up.
     await supabase
       .from('ai_messages')
       .update({
@@ -900,8 +1099,8 @@ async function kickoffAutopilotForNewDay(args: {
         input_tokens: result.inputTokens,
         output_tokens: result.outputTokens,
         cost_micro_usd: result.costMicroUsd,
-        provider: 'anthropic',
-        model: 'claude-sonnet-4-5',
+        provider,
+        model: threadKey,
       })
       .eq('id', messageId);
     await supabase
@@ -924,17 +1123,50 @@ async function kickoffAutopilotForNewDay(args: {
     const message = err instanceof Error ? err.message : String(err);
     logger.warn('daily-briefing.research.kickoff.failed', {
       day_id: day.id,
+      model: threadKey,
       error: message,
     });
-    // Mark the thread failed (best-effort; ignore secondary failures).
+    // Clear the assistant placeholder so the widget surfaces the error
+    // instead of spinning forever. We write the error message into
+    // `content` so the operator can read it in the chat bubble; the
+    // `status='error'` flag flips off the running spinner.
+    if (messageId) {
+      await supabase
+        .from('ai_messages')
+        .update({
+          status: 'failed',
+          content: `Run failed: ${message}`,
+          provider,
+          model: threadKey,
+        })
+        .eq('id', messageId)
+        .then(() => undefined, () => undefined);
+    }
+    // Mark THIS model's thread failed — scoping by thread_key so a
+    // failure in one tab doesn't blank out the others.
     await supabase
       .from('ai_threads')
       .update({ status: 'failed', last_error: message })
       .eq('use_case', 'daily-briefing-research')
       .eq('host_kind', 'daily_briefing_day')
       .eq('host_id', day.id)
+      .eq('thread_key', threadKey)
       .then(() => undefined, () => undefined);
   }
+}
+
+/**
+ * Provider lookup from model id. Used by the autopilot when fanning
+ * out across tabs — the router needs a provider hint paired with the
+ * model id (it can't infer from the model alone because providers
+ * sometimes serve the same model name). Defaults to anthropic for
+ * unfamiliar names since that's where the historic autopilot runs.
+ */
+function inferProviderFromModel(model: string): 'anthropic' | 'openai' | 'gemini' {
+  if (model.startsWith('claude') || model.startsWith('anthropic')) return 'anthropic';
+  if (model.startsWith('gpt') || model.startsWith('o1') || model.startsWith('o3') || model.startsWith('openai')) return 'openai';
+  if (model.startsWith('gemini') || model.startsWith('google')) return 'gemini';
+  return 'anthropic';
 }
 
 /**
@@ -942,9 +1174,20 @@ async function kickoffAutopilotForNewDay(args: {
  * tolerates a concurrent insert losing the unique-constraint race by
  * re-SELECTing the winning row.
  */
+/**
+ * Default thread_key the autopilot writes against. Must match the
+ * default tab the AiChatModelTabs widget opens in the UI
+ * (defaultModel='claude-sonnet-4-5' for daily-briefing-research). Each
+ * model in the tabs widget gets its own thread row keyed by the
+ * model id, so this is the autopilot's "main" tab — its candidates
+ * land in whichever chat tab is for this model.
+ */
+const AUTOPILOT_THREAD_KEY = 'claude-sonnet-4-5';
+
 async function ensureAiThread(
   supabase: SupabaseClient,
   dayId: string,
+  threadKey: string = AUTOPILOT_THREAD_KEY,
 ): Promise<{ value: { id: string; status: string; input_tokens: number; output_tokens: number; cost_micro_usd: number } } | { error: string }> {
   const select = await supabase
     .from('ai_threads')
@@ -952,7 +1195,7 @@ async function ensureAiThread(
     .eq('use_case', 'daily-briefing-research')
     .eq('host_kind', 'daily_briefing_day')
     .eq('host_id', dayId)
-    .eq('thread_key', '')
+    .eq('thread_key', threadKey)
     .maybeSingle();
   if (select.error) return { error: select.error.message };
   if (select.data) return { value: select.data };
@@ -963,7 +1206,7 @@ async function ensureAiThread(
       use_case: 'daily-briefing-research',
       host_kind: 'daily_briefing_day',
       host_id: dayId,
-      thread_key: '',
+      thread_key: threadKey,
       status: 'idle',
     })
     .select('id, status, input_tokens, output_tokens, cost_micro_usd')
@@ -976,7 +1219,7 @@ async function ensureAiThread(
       .eq('use_case', 'daily-briefing-research')
       .eq('host_kind', 'daily_briefing_day')
       .eq('host_id', dayId)
-      .eq('thread_key', '')
+      .eq('thread_key', threadKey)
       .maybeSingle();
     if (refetch.data) return { value: refetch.data };
     return { error: refetch.error?.message ?? 'lost race + row not found' };
@@ -989,6 +1232,115 @@ async function ensureAiThread(
 
 
 type SupabaseClient = AdminDailyBriefingRoutesDeps['supabase'];
+
+/**
+ * Build the cross-day, cross-thread dedup list for the autopilot.
+ *
+ * Combines (a) every item ever added to any day in this site, with
+ * (b) every candidate title ever surfaced by autopilot in this site's
+ * daily-briefing-research threads. The model is told to avoid all of
+ * them in its next pass. Returns deduplicated titles.
+ *
+ * Failures (network, permission, schema drift) degrade to an empty
+ * list — better to risk a repeat than block the kickoff entirely.
+ */
+/**
+ * Lazy-import @gatewaze-modules/ai's resolveUseCasePrompt so this
+ * module doesn't hard-fail at boot if the ai module is unavailable
+ * (mirrors the lazy-import pattern in research-runner.ts +
+ * gemini-image.ts). Returns empty strings on any error — callers
+ * already know how to fall back to the hardcoded defaults.
+ */
+async function resolveUseCasePromptSafe(
+  supabase: SupabaseClient,
+  useCaseId: string,
+): Promise<{ systemPrompt: string; kickoffMessage: string }> {
+  const attempts = [
+    '@gatewaze-modules/ai/lib/use-case-prompt.js',
+    '../../../../gatewaze-modules/modules/ai/lib/use-case-prompt.ts',
+  ];
+  for (const path of attempts) {
+    try {
+      const mod = (await import(path)) as {
+        resolveUseCasePrompt: (
+          s: SupabaseClient,
+          id: string,
+        ) => Promise<{ systemPrompt: string; kickoffMessage: string }>;
+      };
+      const result = await mod.resolveUseCasePrompt(supabase, useCaseId);
+      return { systemPrompt: result.systemPrompt, kickoffMessage: result.kickoffMessage };
+    } catch {
+      // try next path
+    }
+  }
+  return { systemPrompt: '', kickoffMessage: '' };
+}
+
+async function buildAutopilotDedupList(
+  supabase: SupabaseClient,
+  siteId: string,
+): Promise<string[]> {
+  const titles = new Set<string>();
+
+  // Lookback cutoff. Days older than this aren't scanned for dedup —
+  // an article from a month+ ago is unlikely to re-surface as a
+  // "today's news" candidate, and unbounded scans don't scale.
+  const cutoffMs = Date.now() - AUTOPILOT_DEDUP_LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
+  const cutoffIso = new Date(cutoffMs).toISOString().slice(0, 10); // YYYY-MM-DD
+
+  // (a) All items across days within the lookback window for this site.
+  try {
+    const days = await supabase
+      .from('daily_briefing_days')
+      .select('id')
+      .eq('site_id', siteId)
+      .gte('brief_date', cutoffIso);
+    const dayIds = ((days.data ?? []) as Array<{ id: string }>).map((d) => d.id);
+    if (dayIds.length > 0) {
+      const items = await supabase
+        .from('daily_briefing_items')
+        .select('title')
+        .in('day_id', dayIds);
+      for (const row of (items.data ?? []) as Array<{ title: string }>) {
+        if (row.title) titles.add(row.title.trim());
+      }
+    }
+
+    // (b) All candidate titles from prior autopilot turns in this site.
+    if (dayIds.length > 0) {
+      const threads = await supabase
+        .from('ai_threads')
+        .select('id')
+        .eq('use_case', 'daily-briefing-research')
+        .eq('host_kind', 'daily_briefing_day')
+        .in('host_id', dayIds);
+      const threadIds = ((threads.data ?? []) as Array<{ id: string }>).map((t) => t.id);
+      if (threadIds.length > 0) {
+        const msgs = await supabase
+          .from('ai_messages')
+          .select('structured')
+          .in('thread_id', threadIds)
+          .eq('role', 'assistant');
+        for (const row of (msgs.data ?? []) as Array<{ structured: unknown }>) {
+          const s = row.structured;
+          if (!s || typeof s !== 'object') continue;
+          const cands = (s as { candidates?: unknown }).candidates;
+          if (!Array.isArray(cands)) continue;
+          for (const c of cands) {
+            if (c && typeof c === 'object') {
+              const t = (c as Record<string, unknown>).title;
+              if (typeof t === 'string' && t.trim()) titles.add(t.trim());
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Best-effort. An empty/partial list still lets the kickoff run.
+  }
+
+  return Array.from(titles);
+}
 
 /**
  * Look up the thread for a day, creating it on first read. Tolerant
@@ -1021,4 +1373,5 @@ export function mountAdminDailyBriefingRoutes(
   // daily_briefing_items row from a structured candidate the model
   // surfaced).
   router.post('/admin/days/:id/research/approve', routes.approveResearchCandidate);
+  router.post('/admin/days/:id/research/run', routes.runResearchKickoff);
 }
